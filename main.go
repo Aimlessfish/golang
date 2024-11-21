@@ -1,6 +1,8 @@
 // Example of using argument flags in Go.
 // Get, parse, output parse.
 
+// Example of structured logging also included.
+
 package main
 
 import (
