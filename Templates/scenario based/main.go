@@ -40,9 +40,9 @@ func main() {
 	// new slice of server.properties
 	serverPorts := []PaperDotProperties{
 		{
-			QueryPort: Query,
-			RconPort: Rcon,
-			ServerPort: Server,
+			QueryPort: *Query,
+			RconPort: *Rcon,
+			ServerPort: *Server,
 		},
 	}
 
