@@ -4,7 +4,7 @@
 
 // This example is of an automated mail query
 
-package execCommand
+package main
 
 import (
 	"log/slog"
