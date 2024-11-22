@@ -48,13 +48,14 @@ func main() {
 	var tmplFile = "server.properties.tmpl"
 	tmpl, err := template.ParseFiles(tmplFile)
 	if err != nil {
-		logger.Warn("Error", err.Error())
+		logger.Warn("Error, ", "Parsing tempate failed", err.Error())
 		os.Exit(1)
 	}
-	err = tmpl.Execute(os.Stdout, serverPorts)
+	err = tmpl.Execute(os.Create("server.properties"), serverPorts) //here would be the path to the server dir you are setting up
 	if err != nil {
 		logger.Warn("Error,", "Template execution failed", err.Error())
 		os.Exit(1)
 	}
+	defer file.Close()
 
 }
