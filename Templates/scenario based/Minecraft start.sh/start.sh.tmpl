@@ -1,0 +1,3 @@
+{{ range .}}
+java -Xms{{ .XMS }}G -Xmx{{ .XMX }}G -jar paper.jar -XX:ParallelGCThreads={{ .Threads }} --nogui
+{{ end }}

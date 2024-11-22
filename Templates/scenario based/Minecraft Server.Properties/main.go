@@ -31,12 +31,12 @@ func main() {
 	flag.Parse()
 
 	if *Query == "" || *Rcon == "" || *Server == "" {
-		logger.Info("-Query -Rcon -Server arguments are required")
+		logger.Info("-QueryPort -RconPort -ServerPort arguments are required")
 		os.Exit(1)
 	}
 
 
-	// new slice of server.properties
+	// new slice of server.properties template
 	serverPorts := []PaperDotProperties{
 		{
 			QueryPort: *Query,
@@ -48,7 +48,7 @@ func main() {
 	var tmplFile = "server.properties.tmpl"
 	tmpl, err := template.ParseFiles(tmplFile)
 	if err != nil {
-		logger.Warn("Error, ", "Parsing tempate failed", err.Error())
+		logger.Warn("Error, ", "Parsing tempate failed: ", err.Error())
 		os.Exit(1)
 	}
 	file, err := os.Create("server.properties")
