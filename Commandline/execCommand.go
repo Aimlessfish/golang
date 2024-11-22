@@ -4,7 +4,7 @@
 
 // This example is of an automated mail query
 
-package main
+package execCommand
 
 import (
 	"log/slog"
@@ -12,7 +12,7 @@ import (
 	"os/exec"
 )
 
-func main() {
+func execCommand() {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)

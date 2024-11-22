@@ -2,7 +2,7 @@
 // file manipulaiton and creation
 // hardcoded filepath for ease
 
-package main
+package templates
 
 import (
 	"log/slog"
@@ -16,7 +16,7 @@ type Example struct {
 	Age  int
 }
 
-func main() {
+func templates() {
 	// new logger instance
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)

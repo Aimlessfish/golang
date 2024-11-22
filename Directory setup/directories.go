@@ -1,14 +1,14 @@
 // Here is an example of creating directories with permissions
 // requires elevated permissions to run
 
-package main
+package directories
 
 import (
 	"log/slog"
 	"os"
 )
 
-func main() {
+func directories() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("LogID", "directories")
