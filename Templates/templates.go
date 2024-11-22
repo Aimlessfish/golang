@@ -2,7 +2,7 @@
 // file manipulaiton and creation
 // hardcoded filepath for ease
 
-package templates
+package main
 
 import (
 	"log/slog"

@@ -1,1 +1,1 @@
-module flags
+module main

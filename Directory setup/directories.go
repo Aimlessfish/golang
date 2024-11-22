@@ -1,7 +1,7 @@
 // Here is an example of creating directories with permissions
 // requires elevated permissions to run
 
-package directories
+package main
 
 import (
 	"log/slog"

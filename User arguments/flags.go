@@ -3,7 +3,7 @@
 
 // Example of structured logging also included.
 
-package flags
+package main
 
 import (
 	"flag"

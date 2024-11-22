@@ -1,1 +1,1 @@
-module templates
+module main
