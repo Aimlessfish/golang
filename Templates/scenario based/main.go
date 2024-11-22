@@ -7,7 +7,6 @@ package main
 
 import (
 	"os"
-	"fmt"
 	"text/template"
 	"log/slog"
 	"flag"
