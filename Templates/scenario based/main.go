@@ -1,7 +1,7 @@
 // example in real world production of automated minecraft server deployment
 // this script covers editing configs using go templates
 
-// runtime flags are -Query -Rcon -Server
+// runtime flags are -QueryPort -RconPort -ServerPort
 
 package main
 
