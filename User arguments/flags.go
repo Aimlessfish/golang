@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-func flags() {
+func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("logID", "Main")

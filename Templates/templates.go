@@ -16,7 +16,7 @@ type Example struct {
 	Age  int
 }
 
-func templates() {
+func main() {
 	// new logger instance
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)

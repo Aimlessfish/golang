@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func directories() {
+func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("LogID", "directories")

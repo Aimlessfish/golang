@@ -12,7 +12,7 @@ import (
 	"os/exec"
 )
 
-func execCommand() {
+func main() {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
