@@ -25,13 +25,13 @@ func main() {
 	logger = slog.With("LogID", "PaperDotProperties")
 
 	// setup flags for the above structure
-	Query := flag.String("QueryPort", 0, "Server Query Port (int)")
-	Rcon := flag.String("RconPort", 0, "Server Rcon Port (int)")
-	Server := flag.String("ServerPort", 0, "Server port (int)")
+	Query := flag.String("QueryPort", "", "Server Query Port (int)")
+	Rcon := flag.String("RconPort", "", "Server Rcon Port (int)")
+	Server := flag.String("ServerPort", "", "Server port (int)")
 
 	flag.Parse()
 
-	if *Query == 0 || *Rcon == 0 || *Server == 0 {
+	if *Query == "" || *Rcon == "" || *Server == "" {
 		logger.Info("-Query -Rcon -Server arguments are required")
 		os.Exit(1)
 	}
