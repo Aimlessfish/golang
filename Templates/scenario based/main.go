@@ -14,9 +14,9 @@ import (
 )
 
 type PaperDotProperties struct {
-	QueryPort int
-	RconPort int
-	ServerPort int
+	QueryPort string
+	RconPort string
+	ServerPort string
 }
 
 func main() {
