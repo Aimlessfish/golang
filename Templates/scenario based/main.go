@@ -51,7 +51,12 @@ func main() {
 		logger.Warn("Error, ", "Parsing tempate failed", err.Error())
 		os.Exit(1)
 	}
-	err = tmpl.Execute(os.Create("server.properties"), serverPorts) //here would be the path to the server dir you are setting up
+	file, err := os.Create("server.properties")
+	if err != nil {
+		logger.Warn("Fatal", "Could not create server.properties", err.Error())
+		os.Exit(1)
+	}
+	err = tmpl.Execute(file, serverPorts) //here would be the path to the server dir you are setting up
 	if err != nil {
 		logger.Warn("Error,", "Template execution failed", err.Error())
 		os.Exit(1)
