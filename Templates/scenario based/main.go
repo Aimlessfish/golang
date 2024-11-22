@@ -50,7 +50,7 @@ func main() {
 	tmpl, err := template.ParseFiles(tmplFile)
 	if err != nil {
 		logger.Warn("Error", err.Error())
-		os.Exit()
+		os.Exit(1)
 	}
 	err = tmpl.Execute(os.Stdout, serverPorts)
 	if err != nil {
