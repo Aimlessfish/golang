@@ -37,6 +37,13 @@ func main() {
 	err := copyFile(*source, *destination)
 	if err != nil {
 		logger.Warn("Error running copyFile", err.Error())
+		os.Exit(1)
+	}
+
+	err = os.WriteFile(*destination, bytesRead, 0644)
+	if err != nil {
+		logger.Warn("Failed to write destination file", err.Error())
+		os.Exit(1)
 	}
 
 }
