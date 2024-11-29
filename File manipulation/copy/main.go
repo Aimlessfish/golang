@@ -1,3 +1,5 @@
+// usage flags -Source ../filepath/file.txt -Destination ../destination/file.txt
+
 package main
 
 import (
