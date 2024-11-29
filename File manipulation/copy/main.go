@@ -40,10 +40,4 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = os.WriteFile(*destination, bytesRead, 0644)
-	if err != nil {
-		logger.Warn("Failed to write destination file", err.Error())
-		os.Exit(1)
-	}
-
 }
