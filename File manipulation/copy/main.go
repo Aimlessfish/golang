@@ -23,6 +23,8 @@ func copyFile(src string, dest string) error {
 		return err
 	}
 
+	return nil
+
 }
 
 func main() {
