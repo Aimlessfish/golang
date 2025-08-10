@@ -19,11 +19,12 @@ func main() {
 	}
 	logger.Info(userOS)
 
-	driver, err := getproxy.GetProxy()
+	proxy, err := getproxy.GetProxiedSession()
 	if err != nil {
 		logger.Error("Failed to init proxy.GetProxy", "internal error", err)
 		os.Exit(1)
 	}
+
 	defer func() {
 		if err := driver.Quit(); err != nil {
 			logger.Error("Failed to quit driver", "error", err)

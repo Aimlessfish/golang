@@ -25,7 +25,7 @@ func loggerInit(logID, descriptor string) *slog.Logger {
 	return logger
 }
 
-func GetProxy() (string, error) {
+func GetProxiedSession() (string, error) {
 	logger := loggerInit("ID", "TestProxy")
 
 	proxies, err := APICall()
@@ -56,12 +56,11 @@ func GetProxy() (string, error) {
 		logger.Error("Failed testing proxies", "error", err)
 		os.Exit(1)
 	}
-	if len(testedProxy) == 1 {
+	if len(testedProxy) <= 1 {
 		return string(testedProxy[0]), nil
-	} else {
-		return "no proxy to return", nil
 	}
 
+	return "", nil
 }
 
 func APICall() ([]string, error) {
@@ -82,7 +81,9 @@ func APICall() ([]string, error) {
 		logger.Error("Failed to parse response", "error", err)
 	}
 	proxies := strings.Split(string(bodyText), "\n")
+
 	return proxies, nil
+
 }
 
 func TestProxy(proxies []string) ([]string, error) {
