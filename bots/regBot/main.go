@@ -4,12 +4,20 @@ import (
 	"log/slog"
 	"os"
 	getproxy "regbot/proxyhandler"
+	util "regbot/util"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("LogID", "REGBOT MAIN")
+
+	os, err := util.CheckOS()
+	if err != nil {
+		logger.Error("Failed to check OS, Exiting.", "error", err)
+		os.Exit(1)
+	}
+
 	driver, err := getproxy.GetProxy()
 	if err != nil {
 		logger.Error("Failed to init proxy.GetProxy", "internal error", err)
