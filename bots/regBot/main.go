@@ -12,11 +12,12 @@ func main() {
 	slog.SetDefault(logger)
 	logger = slog.With("LogID", "REGBOT MAIN")
 
-	os, err := util.CheckOS()
+	userOS, err := util.CheckOS()
 	if err != nil {
 		logger.Error("Failed to check OS, Exiting.", "error", err)
 		os.Exit(1)
 	}
+	logger.Info(userOS)
 
 	driver, err := getproxy.GetProxy()
 	if err != nil {
