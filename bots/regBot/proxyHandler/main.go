@@ -1,6 +1,7 @@
-package getproxy
+package proxyhandler
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -24,7 +25,7 @@ func loggerInit(logID, descriptor string) *slog.Logger {
 	return logger
 }
 
-func GetProxy() (selenium.WebDriver, error) {
+func GetProxy() (string, error) {
 	logger := loggerInit("ID", "TestProxy")
 
 	proxies, err := APICall()
@@ -55,14 +56,11 @@ func GetProxy() (selenium.WebDriver, error) {
 		logger.Error("Failed testing proxies", "error", err)
 		os.Exit(1)
 	}
-
-	driver, err := ApplyBrowserProxy("FireFox", string(testedProxy[0]))
-	if err != nil {
-		logger.Error("Failed to apply proxy to browser", "error", err)
-		os.Exit(1)
+	if len(testedProxy) == 1 {
+		return string(testedProxy[0]), nil
+	} else {
+		return "no proxy to return", nil
 	}
-
-	return driver, nil
 
 }
 
@@ -111,7 +109,7 @@ func TestProxy(proxies []string) ([]string, error) {
 	return workingProxies, nil
 }
 
-func ApplyBrowserProxy(browserType, workingProxy string) (selenium.WebDriver, error) {
+func ApplyBrowserProxy(browserType, workingProxy string) (string, error) {
 	logger := loggerInit("ID", "Apply Single Proxy")
 	if len(workingProxy) == 0 {
 		logger.Error("The passed working proxy value is nil", "exiting", workingProxy)
@@ -121,34 +119,40 @@ func ApplyBrowserProxy(browserType, workingProxy string) (selenium.WebDriver, er
 		logger.Error("The passed browser value is nil", "exiting", browserType)
 		os.Exit(1)
 	}
-
-	seleniumServer := "http://localhost:4444/wd/hub"
-
 	var caps selenium.Capabilities
 
-	if browserType == "FireFox" {
+	switch browserType {
+	case "FireFox":
 		caps = selenium.Capabilities{
 			"browserName": "firefox",
 		}
+
+		firefoxCaps := map[string]interface{}{
+			"proxy": map[string]interface{}{
+				"proxyType": "manual",
+				"httpProxy": workingProxy,
+				"sslProxy":  workingProxy,
+			},
+		}
+		caps["moz:firefoxOptions"] = firefoxCaps
+
+	case "Chrome":
+		caps = selenium.Capabilities{
+			"browserName": "chrome",
+		}
+
+		chromeCaps := map[string]interface{}{
+			"proxy": map[string]interface{}{
+				"proxyType": "manual",
+				"httpProxy": workingProxy,
+				"sslProxy":  workingProxy,
+			},
+		}
+		caps["goog:chromeOptions"] = chromeCaps
+
+	default:
+		return "Error", fmt.Errorf("unsupported browser type: %s", browserType)
 	}
-	firefoxCaps := map[string]interface{}{
-		"proxy": map[string]interface{}{
-			"proxyType": "manual",
-			"httpProxy": workingProxy,
-			"sslProxy":  workingProxy,
-		},
-	}
-	caps["moz:firefoxOptions"] = firefoxCaps
 
-	// if browserType == "Chrome" {
-
-	// }
-
-	driver, err := selenium.NewRemote(caps, seleniumServer)
-	if err != nil {
-		logger.Error("Failed to create firefox driver", "error", err)
-		os.Exit(1)
-	}
-
-	return driver, nil
+	return browserType, nil
 }

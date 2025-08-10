@@ -22,7 +22,13 @@ func main() {
 	driver, err := getproxy.GetProxy()
 	if err != nil {
 		logger.Error("Failed to init proxy.GetProxy", "internal error", err)
+		os.Exit(1)
 	}
+	defer func() {
+		if err := driver.Quit(); err != nil {
+			logger.Error("Failed to quit driver", "error", err)
+		}
+	}()
 	err = driver.Get("https://aimlessdev.co.uk")
 	if err != nil {
 		logger.Error("Failed to get url", "error", err)
