@@ -1,4 +1,4 @@
-package getProxy
+package getproxy
 
 import (
 	"io"
@@ -8,11 +8,24 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/tebeka/selenium"
 )
 
-func GetProxy() {
+type BrowserType struct {
+	FireFox string
+	Chrome  string
+}
+
+func loggerInit(logID, descriptor string) *slog.Logger {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	logger = slog.With(logID, descriptor)
+	return logger
+}
+
+func GetProxy() (selenium.WebDriver, error) {
 	logger := loggerInit("ID", "TestProxy")
-	logger.Info("Fuck you")
 
 	proxies, err := APICall()
 	if err != nil {
@@ -31,13 +44,26 @@ func GetProxy() {
 		logger.Info("your proxy:" + proxy)
 	}
 
-}
+	rawProxies, err := APICall()
+	if err != nil {
+		logger.Error("Failed to call API call from main", "error", err)
+		os.Exit(1)
+	}
 
-func loggerInit(logID, descriptor string) *slog.Logger {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With(logID, descriptor)
-	return logger
+	testedProxy, err := TestProxy(rawProxies)
+	if err != nil {
+		logger.Error("Failed testing proxies", "error", err)
+		os.Exit(1)
+	}
+
+	driver, err := ApplyBrowserProxy("FireFox", string(testedProxy[0]))
+	if err != nil {
+		logger.Error("Failed to apply proxy to browser", "error", err)
+		os.Exit(1)
+	}
+
+	return driver, nil
+
 }
 
 func APICall() ([]string, error) {
@@ -76,11 +102,53 @@ func TestProxy(proxies []string) ([]string, error) {
 
 		workingProxies = append(workingProxies, proxy)
 
-		if len(workingProxies) == 10 {
+		if len(workingProxies) == 1 { // EDIT THIS TO RETURN AS MANY AS YOU WANT
 			break
 		}
 
 	}
 
 	return workingProxies, nil
+}
+
+func ApplyBrowserProxy(browserType, workingProxy string) (selenium.WebDriver, error) {
+	logger := loggerInit("ID", "Apply Single Proxy")
+	if len(workingProxy) == 0 {
+		logger.Error("The passed working proxy value is nil", "exiting", workingProxy)
+		os.Exit(1)
+	}
+	if len(browserType) == 0 {
+		logger.Error("The passed browser value is nil", "exiting", browserType)
+		os.Exit(1)
+	}
+
+	seleniumServer := "http://localhost:4444/wd/hub"
+
+	var caps selenium.Capabilities
+
+	if browserType == "FireFox" {
+		caps = selenium.Capabilities{
+			"browserName": "firefox",
+		}
+	}
+	firefoxCaps := map[string]interface{}{
+		"proxy": map[string]interface{}{
+			"proxyType": "manual",
+			"httpProxy": workingProxy,
+			"sslProxy":  workingProxy,
+		},
+	}
+	caps["moz:firefoxOptions"] = firefoxCaps
+
+	// if browserType == "Chrome" {
+
+	// }
+
+	driver, err := selenium.NewRemote(caps, seleniumServer)
+	if err != nil {
+		logger.Error("Failed to create firefox driver", "error", err)
+		os.Exit(1)
+	}
+
+	return driver, nil
 }
