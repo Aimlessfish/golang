@@ -19,6 +19,14 @@ import (
 	"github.com/tebeka/selenium"
 )
 
+const (
+	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
+	LINUX_GECKO_PATH = "../bin/geckodriver"
+	GECKO_PORT       = 4444
+	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
+	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
+)
+
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
 	proxies, err := apiCalls.FetchFromPubProxy()
 	logger := util.LoggerInit("ID", "TestProxy")
