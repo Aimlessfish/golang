@@ -26,8 +26,6 @@ const (
 	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?type=http"
 )
 
-var service *selenium.Service
-
 type osType struct {
 	Linux   string
 	Windows string
@@ -151,11 +149,6 @@ func APICall(osType string) ([]string, error) { // get proxies
 	}
 
 	proxies := strings.Split(strings.TrimSpace(string(bodyText)), "\n")
-
-	if osType == "darwin" {
-		os.Exit(1)
-	}
-
 	return proxies, nil
 }
 
