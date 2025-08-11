@@ -5,6 +5,7 @@ import (
 	"os"
 	getproxy "regbot/proxyhandler"
 	util "regbot/util"
+	"time"
 )
 
 func main() {
@@ -19,21 +20,27 @@ func main() {
 	}
 	logger.Info(userOS)
 
-	proxy, err := getproxy.GetProxiedSession()
+	driver, service, err := getproxy.GetProxiedSession(userOS)
 	if err != nil {
 		logger.Error("Failed to init proxy.GetProxy", "internal error", err)
 		os.Exit(1)
 	}
 
 	defer func() {
-		if err := driver.Quit(); err != nil {
-			logger.Error("Failed to quit driver", "error", err)
+		if driver != nil {
+			driver.Quit()
+			logger.Info("Driver has quit")
+		}
+		if service != nil {
+			service.Stop()
+			logger.Info("Service has quit")
 		}
 	}()
-	err = driver.Get("https://aimlessdev.co.uk")
+	err = driver.Get("http://myip.com")
 	if err != nil {
 		logger.Error("Failed to get url", "error", err)
 		os.Exit(1)
 	}
+	time.Sleep(20 * time.Second)
 
 }
