@@ -2,10 +2,7 @@ module regbot
 
 go 1.23.5
 
-require (
-	github.com/carlmjohnson/requests v0.24.3
-	github.com/tebeka/selenium v0.9.9
-)
+require github.com/tebeka/selenium v0.9.9
 
 require (
 	github.com/blang/semver v3.5.1+incompatible // indirect

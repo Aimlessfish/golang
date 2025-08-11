@@ -7,57 +7,19 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"log/slog"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"apiCalls/apiCalls"
+
 	"github.com/tebeka/selenium"
 )
 
-const (
-	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
-	LINUX_GECKO_PATH = "../bin/geckodriver"
-	GECKO_PORT       = 4444
-	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
-	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?type=http"
-)
-
-type osType struct {
-	Linux   string
-	Windows string
-	Mac     string
-}
-
-type JSONResponsePubProxies struct {
-	Data []struct {
-		IP   string `json:"ip"`
-		Port string `json:"port"`
-	} `json:"data"`
-}
-
-var OSLIST = []osType{
-	{
-		Linux:   "FireFox",
-		Windows: "FireFox",
-	},
-	{
-		Linux:   "FireFox",
-		Windows: "FireFox",
-	},
-}
-
-func loggerInit(logID, descriptor string) *slog.Logger {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With(logID, descriptor)
-	return logger
-}
-
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
+	err := apiCalls.FetchFromPubProxy()
 	logger := loggerInit("ID", "TestProxy")
 
 	proxies, err := APICall(osType)
@@ -129,34 +91,18 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 func APICall(osType string) ([]string, error) { // get proxies
 	logger := loggerInit("LogID", "APICall")
 
-	client := &http.Client{Timeout: 10 * time.Second} // NEED A PAID API ALL THESE ARE SHIT
-	req, err := http.NewRequest("GET", PUB_PROXY_API, nil)
-	if err != nil {
-		logger.Error("Failed to create HTTP Request", "error", err)
-		return nil, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error("Failed to perform HTTP request", "error", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
+	var allProxies []string
 
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Error("Failed to read response", "error", err)
-		return nil, err
+	pubProxies, err := FetchFromPubProxy()
+	if err == nil {
+		allProxies = append(allProxies, pubProxies...)
+
+	} else {
+		logger.Error("Failed to fetch from PubProxy.com", "error", err)
 	}
 
-	proxies := strings.Split(strings.TrimSpace(string(bodyText)), "\n")
-<<<<<<< HEAD
-	if osType == "darwin" {
-		os.Exit(1)
-	}
-
-=======
->>>>>>> 713b10f2d033d83e35c042c633cb38dc612cec0b
-	return proxies, nil
+	// Fallback: plain text)
+	return allProxies, nil
 }
 
 func TestProxy(proxies []string) ([]string, error) {
@@ -175,6 +121,7 @@ func TestProxy(proxies []string) ([]string, error) {
 		workingProxies = append(workingProxies, proxy)
 
 		if len(workingProxies) == 1 { // EDIT THIS TO RETURN AS MANY AS YOU WANT
+			logger.Info("Current Proxy: " + proxy)
 			break
 		}
 
