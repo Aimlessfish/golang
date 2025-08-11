@@ -1,4 +1,4 @@
-package proxyhandler
+package proxyHandler
 
 import (
 	"archive/zip"

@@ -3,7 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
-	getproxy "regbot/proxyhandler"
+	getproxy "regbot/proxyHandler"
 	util "regbot/util"
 	"time"
 )
