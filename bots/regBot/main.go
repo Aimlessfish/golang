@@ -36,11 +36,12 @@ func main() {
 			logger.Info("Service has quit")
 		}
 	}()
-	err = driver.Get("http://myip.com")
+	err = driver.Get("https://hpivaluations.com/#")
 	if err != nil {
 		logger.Error("Failed to get url", "error", err)
 		os.Exit(1)
 	}
 	time.Sleep(20 * time.Second)
+	driver.Quit()
 
 }
