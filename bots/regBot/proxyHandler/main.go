@@ -65,8 +65,8 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 				return nil, nil, err
 			}
 		}
-
-		driver, err = ApplyBrowserProxy(browserType, workingProxies[0])
+		proxy := workingProxies[0]
+		driver, err = BrowserProxyWindows(browserType, proxy)
 		if err != nil {
 			logger.Error("Failed to create proxied browser session", "error", err)
 			if service != nil {
@@ -79,20 +79,6 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 	}
 
 	/* IF LINUX DEFAULT CASE */
-	service, err = selenium.NewGeckoDriverService(LINUX_GECKO_PATH, GECKO_PORT)
-	if err != nil {
-		logger.Error("Failed to start geckodriver service", "error", err)
-		return nil, nil, err
-	}
-
-	driver, err = ApplyBrowserProxy(browserType, workingProxies[0])
-	if err != nil {
-		logger.Error("Failed to create proxied browser session", "error", err)
-		if service != nil {
-			service.Stop()
-		}
-		return nil, nil, err
-	}
 
 	return driver, service, nil
 }
@@ -102,7 +88,7 @@ func APICall(osType string) ([]string, error) { // get proxies
 
 	var allProxies []string
 
-	pubProxies, err := apiCalls.FetchPubProxy()
+	pubProxies, err := apiCalls.FetchPubProxy(logger)
 	if err == nil {
 		allProxies = append(allProxies, pubProxies...)
 		return allProxies, nil
@@ -113,7 +99,7 @@ func APICall(osType string) ([]string, error) { // get proxies
 		logger.Error("Failed to scrape PubProxy API")
 		return nil, nil
 	}
-	proxies, err := apiCalls.FetchProxyScrape()
+	proxies, err := apiCalls.FetchProxyScrape(logger)
 	allProxies = append(allProxies, proxies...)
 	if len(proxies) == 0 {
 		logger.Error("Failed to get list from proxy scrape", "error", err)
@@ -165,7 +151,7 @@ func DetectBrowserAndVersion(osType string) (string, string, error) {
 	}
 }
 
-func ApplyBrowserProxy(browserType, workingProxy string) (selenium.WebDriver, error) {
+func BrowserProxyWindows(browserType, workingProxy string) (selenium.WebDriver, error) {
 	logger := util.LoggerInit("ID", "ApplyBrowserProxy")
 
 	profileDir, err := os.MkdirTemp("", "firefox-profile")

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log/slog"
 	"os"
 	getproxy "regbot/proxyHandler"
 	util "regbot/util"
@@ -13,9 +12,7 @@ const (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With("LogID", "REGBOT MAIN")
+	logger := util.LoggerInit("MAIN", "MAIN")
 
 	userOS, err := util.ServerInit(GECKO_PORT, logger)
 	if err != nil {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
-	util "regbot/util"
 	"strings"
 )
 
@@ -49,8 +49,8 @@ var OSLIST = []osType{
 	},
 }
 
-func FetchPubProxy() ([]string, error) {
-	logger := util.LoggerInit("LogID", "FetchPubProxy")
+func FetchPubProxy(logger *slog.Logger) ([]string, error) {
+	logger = logger.With("LogID", "FetchPubProxy")
 	resp, err := http.Get(PUB_PROXY_API)
 	if err != nil {
 		logger.Error("Failed to build http request for PubProxy.com", "error", err)
@@ -78,8 +78,8 @@ func FetchPubProxy() ([]string, error) {
 	return proxies, nil
 }
 
-func FetchProxyScrape() ([]string, error) {
-	logger := util.LoggerInit("LogID", "FetchProxyScrape")
+func FetchProxyScrape(logger *slog.Logger) ([]string, error) {
+	logger = logger.With("LogID", "FetchProxyScrape")
 	var proxies []string
 
 	resp, err := http.Get(PROXY_SCRAPE_API)
