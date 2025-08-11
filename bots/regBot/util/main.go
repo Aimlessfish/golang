@@ -15,7 +15,23 @@ func LoggerInit(logID, descriptor string) *slog.Logger {
 	return logger
 }
 
-func CheckOS() (string, error) {
+func ServerInit(port string, logger *slog.Logger) (string, error) {
+	logger = logger.With("ServerInit", "Utilities")
+	userOS, err := checkOS()
+	if err != nil {
+		logger.Error("Failed to check OS, Exiting.", "error", err)
+		os.Exit(1)
+	}
+	logger.Info(userOS)
+	status, err := fireWall(port, logger)
+	if err != nil || !status {
+		logger.Error("Error firewal returned false", "error", err)
+		return "", err
+	}
+	return userOS, nil
+}
+
+func checkOS() (string, error) {
 	os := runtime.GOOS
 	if os == "darwin" {
 		msg := "FUCK OFF"
@@ -25,12 +41,8 @@ func CheckOS() (string, error) {
 	return os, nil
 }
 
-func BrowserInit() error {
-
-	return nil
-}
-func FireWall(port string, logger *slog.Logger) (bool, error) {
-	logger = logger.With("FireWall:", "utilities")
+func fireWall(port string, logger *slog.Logger) (bool, error) {
+	logger = logger.With("FireWall", "Utilities")
 
 	cmd := exec.Command("ufw", "allow", port)
 

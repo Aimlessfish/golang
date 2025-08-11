@@ -17,15 +17,9 @@ func main() {
 	slog.SetDefault(logger)
 	logger = slog.With("LogID", "REGBOT MAIN")
 
-	userOS, err := util.CheckOS()
+	userOS, err := util.ServerInit(GECKO_PORT, logger)
 	if err != nil {
-		logger.Error("Failed to check OS, Exiting.", "error", err)
-		os.Exit(1)
-	}
-	logger.Info(userOS)
-
-	if userOS == "linux" {
-		util.FireWall(GECKO_PORT, logger)
+		logger.Error("Server init failed", "error", err)
 	}
 
 	driver, service, err := getproxy.GetProxiedSession(userOS)
