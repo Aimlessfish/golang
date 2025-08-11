@@ -1,12 +1,11 @@
-package apicalls
+package apiCalls
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
-	"os"
+	util "regbot/util"
 	"strings"
 )
 
@@ -50,16 +49,8 @@ var OSLIST = []osType{
 	},
 }
 
-func loggerInit(logID, descriptor string) *slog.Logger {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With(logID, descriptor)
-	return logger
-}
-
 func FetchFromPubProxy() ([]string, error) {
-	logger := loggerInit("LogID", "FetchFromPubProxy")
-
+	logger := util.LoggerInit("LogID", "FetchPubProxy")
 	resp, err := http.Get(PUB_PROXY_API)
 	if err != nil {
 		logger.Error("Failed to build http request", "error", err)
@@ -88,7 +79,7 @@ func FetchFromPubProxy() ([]string, error) {
 }
 
 func FetchProxyScrape() ([]string, error) {
-	logger := loggerInit("LogID", "FetchProxyScrape")
+	logger := util.LoggerInit("LogID", "FetchProxyScrape")
 
 	resp, err := http.Get(PROXY_SCRAPE_API)
 	if err != nil {

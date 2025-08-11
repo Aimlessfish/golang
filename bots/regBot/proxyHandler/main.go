@@ -13,16 +13,17 @@ import (
 	"strings"
 	"time"
 
-	"apiCalls/apiCalls"
+	"regbot/proxyHandler/apiCalls"
+	util "regbot/util"
 
 	"github.com/tebeka/selenium"
 )
 
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
-	err := apiCalls.FetchFromPubProxy()
-	logger := loggerInit("ID", "TestProxy")
+	proxies, err := apiCalls.FetchFromPubProxy()
+	logger := util.LoggerInit("ID", "TestProxy")
 
-	proxies, err := APICall(osType)
+	proxies, err = APICall(osType)
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 		return nil, nil, err
