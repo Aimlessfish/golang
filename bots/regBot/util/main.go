@@ -1,8 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"runtime"
 )
 
@@ -26,4 +28,18 @@ func CheckOS() (string, error) {
 func BrowserInit() error {
 
 	return nil
+}
+func FireWall(port string, logger *slog.Logger) (bool, error) {
+	logger = logger.With("FireWall:", "utilities")
+
+	cmd := exec.Command("ufw", "allow", port)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		logger.Error("Failed to run ufw allow", port, "error", err)
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Printf("Output: %s\n", output)
+
+	return true, nil
 }

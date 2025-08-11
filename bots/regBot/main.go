@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	GECKO_PORT = "4444"
+)
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
@@ -19,6 +23,10 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info(userOS)
+
+	if userOS == "linux" {
+		util.FireWall(GECKO_PORT, logger)
+	}
 
 	driver, service, err := getproxy.GetProxiedSession(userOS)
 	if err != nil {

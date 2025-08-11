@@ -21,17 +21,17 @@ import (
 
 const (
 	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
-	LINUX_GECKO_PATH = "../bin/geckodriver"
+	LINUX_GECKO_PATH = "./bin/geckodriver"
 	GECKO_PORT       = 4444
 	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
 	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
 )
 
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
-	proxies, err := apiCalls.FetchFromPubProxy()
+	// proxies, err := apiCalls.FetchFromPubProxy()
 	logger := util.LoggerInit("ID", "TestProxy")
 
-	proxies, err = APICall(osType)
+	proxies, err := APICall(osType)
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 		return nil, nil, err
@@ -98,16 +98,29 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 }
 
 func APICall(osType string) ([]string, error) { // get proxies
-	logger := loggerInit("LogID", "APICall")
+	logger := util.LoggerInit("LogID", "APICall")
 
 	var allProxies []string
 
-	pubProxies, err := FetchFromPubProxy()
+	pubProxies, err := apiCalls.FetchPubProxy()
 	if err == nil {
 		allProxies = append(allProxies, pubProxies...)
-
+		return allProxies, nil
 	} else {
 		logger.Error("Failed to fetch from PubProxy.com", "error", err)
+	}
+	if len(allProxies) != 0 {
+		logger.Error("Failed to scrape PubProxy API")
+		return nil, nil
+	}
+	proxies, err := apiCalls.FetchProxyScrape()
+	allProxies = append(allProxies, proxies...)
+	if len(proxies) == 0 {
+		logger.Error("Failed to get list from proxy scrape", "error", err)
+	}
+	if len(allProxies) == 0 {
+		logger.Error("NO PROXIES FOUND FROM BOTH SITES CHECK FIREWALL / ISP services")
+		os.Exit(1)
 	}
 
 	// Fallback: plain text)
@@ -116,7 +129,7 @@ func APICall(osType string) ([]string, error) { // get proxies
 
 func TestProxy(proxies []string) ([]string, error) {
 	var workingProxies []string
-	logger := loggerInit("ID", "TestProxy")
+	logger := util.LoggerInit("ID", "TestProxy")
 
 	for _, proxy := range proxies {
 		timeout := 2 * time.Second
@@ -153,7 +166,7 @@ func DetectBrowserAndVersion(osType string) (string, string, error) {
 }
 
 func ApplyBrowserProxy(browserType, workingProxy string) (selenium.WebDriver, error) {
-	logger := loggerInit("ID", "ApplyBrowserProxy")
+	logger := util.LoggerInit("ID", "ApplyBrowserProxy")
 
 	profileDir, err := os.MkdirTemp("", "firefox-profile")
 	if err != nil {

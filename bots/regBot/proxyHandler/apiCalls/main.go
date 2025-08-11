@@ -49,11 +49,11 @@ var OSLIST = []osType{
 	},
 }
 
-func FetchFromPubProxy() ([]string, error) {
+func FetchPubProxy() ([]string, error) {
 	logger := util.LoggerInit("LogID", "FetchPubProxy")
 	resp, err := http.Get(PUB_PROXY_API)
 	if err != nil {
-		logger.Error("Failed to build http request", "error", err)
+		logger.Error("Failed to build http request for PubProxy.com", "error", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -80,10 +80,11 @@ func FetchFromPubProxy() ([]string, error) {
 
 func FetchProxyScrape() ([]string, error) {
 	logger := util.LoggerInit("LogID", "FetchProxyScrape")
+	var proxies []string
 
 	resp, err := http.Get(PROXY_SCRAPE_API)
 	if err != nil {
-		logger.Error("Failed to fetch proxies from ProxyScrape", "error", err)
+		logger.Error("Failed to buld http request for ProxyScrape", "error", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -98,23 +99,13 @@ func FetchProxyScrape() ([]string, error) {
 		logger.Error("Failed to read response body", "error", err)
 		return nil, fmt.Errorf("ProxyScrape response read failed: %w", err)
 	}
-
-	// Parse proxies line by line
 	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
 
-	var proxies []string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line != "" {
 			proxies = append(proxies, line)
 		}
 	}
-
-	if len(proxies) == 0 {
-		err := fmt.Errorf("no proxies found in ProxyScrape response")
-		logger.Error(err.Error())
-		return nil, err
-	}
-
 	return proxies, nil
 }
