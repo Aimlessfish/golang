@@ -19,8 +19,11 @@ import (
 )
 
 const (
-	GECKO_PATH = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
-	GECKO_PORT = 4444
+	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
+	LINUX_GECKO_PATH = "./bin/geckodriver"
+	GECKO_PORT       = 4444
+	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
+	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?type=http"
 )
 
 var service *selenium.Service
@@ -31,16 +34,21 @@ type osType struct {
 	Mac     string
 }
 
+type JSONResponsePubProxies struct {
+	Data []struct {
+		IP   string `json:"ip"`
+		Port string `json:"port"`
+	} `json:"data"`
+}
+
 var OSLIST = []osType{
 	{
 		Linux:   "FireFox",
-		Windows: "Chrome",
-		Mac:     "Safari",
+		Windows: "FireFox",
 	},
 	{
-		Linux:   "Chrome",
+		Linux:   "FireFox",
 		Windows: "FireFox",
-		Mac:     "Chrome",
 	},
 }
 
@@ -54,7 +62,7 @@ func loggerInit(logID, descriptor string) *slog.Logger {
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
 	logger := loggerInit("ID", "TestProxy")
 
-	proxies, err := APICall()
+	proxies, err := APICall(osType)
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 		return nil, nil, err
@@ -77,20 +85,38 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 	}
 	logger.Info("Using browser", "type", browserType, "version", version)
 
-	if osType != "linux" && osType != "mac" {
-		osType = "windows"
-	}
-
 	var service *selenium.Service
-	if osType == "windows" && browserType == "FireFox" {
-		service, err = selenium.NewGeckoDriverService(GECKO_PATH, GECKO_PORT)
+	var driver selenium.WebDriver
+
+	if osType != "linux" {
+		if osType == "windows" && browserType == "FireFox" {
+			service, err = selenium.NewGeckoDriverService(WIN_GECKO_PATH, GECKO_PORT)
+			if err != nil {
+				logger.Error("Failed to start geckodriver service", "error", err)
+				return nil, nil, err
+			}
+		}
+
+		driver, err = ApplyBrowserProxy(browserType, workingProxies[0])
 		if err != nil {
-			logger.Error("Failed to start geckodriver service", "error", err)
+			logger.Error("Failed to create proxied browser session", "error", err)
+			if service != nil {
+				service.Stop()
+			}
 			return nil, nil, err
 		}
+
+		return driver, service, nil
 	}
 
-	driver, err := ApplyBrowserProxy(browserType, workingProxies[0])
+	/* IF LINUX DEFAULT CASE */
+	service, err = selenium.NewGeckoDriverService(LINUX_GECKO_PATH, GECKO_PORT)
+	if err != nil {
+		logger.Error("Failed to start geckodriver service", "error", err)
+		return nil, nil, err
+	}
+
+	driver, err = ApplyBrowserProxy(browserType, workingProxies[0])
 	if err != nil {
 		logger.Error("Failed to create proxied browser session", "error", err)
 		if service != nil {
@@ -102,11 +128,11 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 	return driver, service, nil
 }
 
-func APICall() ([]string, error) { // get proxies
+func APICall(osType string) ([]string, error) { // get proxies
 	logger := loggerInit("LogID", "APICall")
 
-	client := &http.Client{Timeout: 10 * time.Second} /* NEED A PAID API ALL THESE ARE SHIT*/
-	req, err := http.NewRequest("GET", "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500", nil)
+	client := &http.Client{Timeout: 10 * time.Second} // NEED A PAID API ALL THESE ARE SHIT
+	req, err := http.NewRequest("GET", PUB_PROXY_API, nil)
 	if err != nil {
 		logger.Error("Failed to create HTTP Request", "error", err)
 		return nil, err
@@ -117,12 +143,19 @@ func APICall() ([]string, error) { // get proxies
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	bodyText, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("Failed to read response", "error", err)
 		return nil, err
 	}
+
 	proxies := strings.Split(strings.TrimSpace(string(bodyText)), "\n")
+
+	if osType == "darwin" {
+		os.Exit(1)
+	}
+
 	return proxies, nil
 }
 
