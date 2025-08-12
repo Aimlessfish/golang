@@ -1,5 +1,22 @@
 /* Written by Will Meekin */
 /* This scrapes two proxy api providers and returns as many working proxies as possile */
+
+// production only
+
+/*
+type flags struct {
+	returnType int
+}
+*/
+
+/*
+	 change this to getProxy() ([]string, error) {
+		flag.int("type", 0, "return type 0 == 1 PROXY || 1 == LIST OF PROXIES")
+		*** main logic here ****
+
+		return proxies, nil
+	}
+*/
 package main
 
 import (
@@ -11,21 +28,6 @@ import (
 
 	"proxyHandler/apiCalls"
 )
-
-// production only
-
-/*
-type flags struct {
-	returnType int
-}
-*/
-
-/* change this to getProxy() ([]string, error) {
-	flag.int("type", 0, "return type 0 == 1 PROXY || 1 == LIST OF PROXIES")
-	*** main logic here ****
-
-	return proxies, nil
-}*/
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
