@@ -58,7 +58,7 @@ func fireWall(port string, logger *slog.Logger) (bool, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		logger.Error("Failed to run ufw allow", port, "error", err)
+		logger.Error("Failed to run ufw allow", "error", err)
 		fmt.Printf("Error: %v\n", err)
 	}
 	fmt.Printf("Output: %s\n", output)
@@ -123,8 +123,8 @@ user_pref("network.proxy.ssl_port", %v);
 		"browserName":     "firefox",
 		"firefox_profile": encodedProfile,
 	}
-
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d", servicePort))
+	localHost := "http://localhost:4444"
+	wd, err := selenium.NewRemote(caps, localHost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to geckodriver: %w", err)
 	}
@@ -132,9 +132,8 @@ user_pref("network.proxy.ssl_port", %v);
 	return wd, nil
 }
 
-func BrowserProxyLinux(driverPath, browserType, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, *selenium.Service, error) {
+func BrowserProxyLinux(binaryPath, driverPath, browserType, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, *selenium.Service, error) {
 	logger = logger.With("component", "BrowserProxyLinux")
-
 	// Start GeckoDriver service
 	servicePortInt, err := strconv.Atoi(servicePort)
 	if err != nil {
@@ -208,16 +207,21 @@ user_pref("network.proxy.ssl_port", %d);
 	}
 	zipWriter.Close()
 
-	encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
+	// encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	// Setup Firefox capabilities
-	caps := selenium.Capabilities{
-		"browserName":     "firefox",
-		"firefox_profile": encodedProfile,
+
+	caps := selenium.Capabilities{"browserName": "firefox"}
+	firefoxCaps := map[string]interface{}{
+		"binary": binaryPath,
+		// "profile": encodedProfile,
 	}
+	caps["moz:firefoxOptions"] = firefoxCaps
 
 	// Connect to WebDriver
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d", servicePort))
+	localHost := "http://localhost:4444"
+
+	wd, err := selenium.NewRemote(caps, localHost)
 	if err != nil {
 		logger.Error("Failed to create selenium WebDriver", "error", err)
 		return nil, nil, err

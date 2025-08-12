@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,10 +23,12 @@ import (
 const (
 	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
 	LINUX_GECKO_PATH = "./bin/geckodriver"
-	GECKO_PORT       = 4444
+	GECKO_PORT       = 5555
 	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
 	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
 )
+
+var LINUX_FF_BINARY = filepath.Join("bin", "firefox", "firefox")
 
 func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, error) {
 	// proxies, err := apiCalls.FetchFromPubProxy()
@@ -56,6 +59,7 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 
 	var service *selenium.Service
 	var driver selenium.WebDriver
+	proxy := workingProxies[0]
 
 	if osType != "linux" {
 		if osType == "windows" && browserType == "FireFox" {
@@ -65,7 +69,6 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 				return nil, nil, err
 			}
 		}
-		proxy := workingProxies[0]
 		driver, err = BrowserProxyWindows(browserType, proxy)
 		if err != nil {
 			logger.Error("Failed to create proxied browser session", "error", err)
@@ -74,12 +77,24 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 			}
 			return nil, nil, err
 		}
+		gecko_port := strconv.Itoa(GECKO_PORT)
+		driver, service, err := util.BrowserProxyLinux(LINUX_FF_BINARY, LINUX_GECKO_PATH, browserType, gecko_port, proxy, logger)
+		if err != nil {
+			logger.Error("Failed to provide browser session.", "error", err)
+			panic(err)
+		}
 
 		return driver, service, nil
 	}
 
-	/* IF LINUX DEFAULT CASE */
-
+	servicePort := strconv.Itoa(GECKO_PORT)
+	driver, service, err = util.BrowserProxyLinux(LINUX_GECKO_PATH, LINUX_FF_BINARY, browserType, servicePort, proxy, logger)
+	if err != nil {
+		logger.Error("Failed to run Linux Browser", "error", err)
+		os.Exit(1)
+	}
+	defer driver.Quit()
+	defer service.Stop()
 	return driver, service, nil
 }
 
@@ -211,9 +226,9 @@ user_pref("network.proxy.ssl_port", %v);
 		"firefox_profile": encodedProfile,
 	}
 
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d", GECKO_PORT))
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%v", GECKO_PORT))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to geckodriver: %w", err)
+		return nil, fmt.Errorf("failed to connect to geckodriver: %v", err)
 	}
 
 	return wd, nil

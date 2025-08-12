@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	GECKO_PORT = "4444"
+	GECKO_PORT = "5555"
 )
 
 func main() {
@@ -35,7 +35,9 @@ func main() {
 			logger.Info("Service has quit")
 		}
 	}()
-	err = driver.Get("https://hpivaluations.com/#")
+	err = driver.Get("http://ifconfig.me")
+
+	// err = driver.Get("https://hpivaluations.com/#")
 	if err != nil {
 		logger.Error("Failed to get url", "error", err)
 		os.Exit(1)
