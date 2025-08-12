@@ -12,7 +12,9 @@ type flags struct {
 /*
 	 change this to getProxy() ([]string, error) {
 		flag.int("type", 0, "return type 0 == 1 PROXY || 1 == LIST OF PROXIES")
-		*** main logic here ****
+		if flag.Int != 1 {
+
+		*** main logic here ***
 
 		return proxies, nil
 	}
@@ -20,6 +22,7 @@ type flags struct {
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log/slog"
 	"net"
@@ -34,20 +37,18 @@ func main() {
 	slog.SetDefault(logger)
 	logger = slog.With("logID", "Main")
 
-	proxies, err := apiCalls.APICall()
+	mode := flag.Int("mode", 0, "return type 0 == PROXY LIST || 1 == 1 PROXY")
+	flag.Parse()
+	if *mode > 1 {
+		logger.Error("Options are 0 for list of proxy || 1 single proxy")
+		os.Exit(1)
+	}
+
+	proxies, err := apiCalls.APICall(*mode)
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 	}
-
-	fmt.Println("Testing....")
-	workingProxies, err := TestProxy(proxies)
-	if err != nil {
-		logger.Error("Failed to test proxies", "error", err)
-	}
-	if len(workingProxies) == 0 {
-		logger.Error("No working proxies found", "error", err)
-	}
-	fmt.Println("Output:")
+	workingProxies := testAndList(proxies)
 	for _, proxy := range workingProxies {
 		fmt.Println(proxy)
 	}
@@ -74,4 +75,19 @@ func TestProxy(proxies []string) ([]string, error) {
 	}
 
 	return workingProxies, nil
+}
+
+func testAndList(proxies []string) []string {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	logger = slog.With("logID", "Test and List")
+
+	workingProxies, err := TestProxy(proxies)
+	if err != nil {
+		logger.Error("Failed to test proxies", "error", err)
+	}
+	if len(workingProxies) == 0 {
+		logger.Error("No working proxies found", "error", err)
+	}
+	return workingProxies
 }

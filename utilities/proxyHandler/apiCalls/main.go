@@ -25,21 +25,13 @@ type PubProxyResponse struct {
 	Count int `json:"count"`
 }
 
-func APICall() ([]string, error) { // get proxies
+func APICall(mode int) ([]string, error) { // get proxies
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("logID", "proxyAPICALL")
 
 	var allProxies []string
 
-	pubProxies, err := FetchPubProxy(logger)
-	logger.Debug("Fetching from PubProxy.com")
-	if err == nil {
-		allProxies = append(allProxies, pubProxies...)
-		return allProxies, nil
-	} else {
-		logger.Error("Failed to fetch from PubProxy.com", "error", err)
-	}
 	logger.Debug("Fetching from ProxyScrape.com")
 	proxies, err := FetchProxyScrape(logger)
 	if len(proxies) == 0 {
@@ -51,7 +43,15 @@ func APICall() ([]string, error) { // get proxies
 		logger.Error("NO PROXIES FOUND FROM BOTH SITES CHECK FIREWALL / ISP services")
 		return nil, err
 	}
-	return allProxies, nil
+	if mode != 1 {
+		return allProxies, nil
+
+	} else if mode == 1 {
+		return []string{allProxies[0]}, nil
+
+	}
+	return nil, nil
+
 }
 
 func FetchPubProxy(logger *slog.Logger) ([]string, error) {
@@ -104,7 +104,7 @@ func FetchProxyScrape(logger *slog.Logger) ([]string, error) {
 		logger.Error("Failed to read response body", "error", err)
 		return nil, fmt.Errorf("ProxyScrape response read failed: %w", err)
 	}
-	rawString := string(body)
+	var rawString = string(body)
 	lines := strings.SplitSeq(rawString, "\n")
 	for line := range lines {
 		if line != "" {
