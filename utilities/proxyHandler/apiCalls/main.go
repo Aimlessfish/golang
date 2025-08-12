@@ -6,22 +6,14 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 )
 
 const (
-	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
-	LINUX_GECKO_PATH = "../bin/geckodriver"
-	GECKO_PORT       = 4444
-	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
+	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=100"
 	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
 )
-
-type osType struct {
-	Linux   string
-	Windows string
-	Mac     string
-}
 
 type PubProxyResponse struct {
 	Data []struct {
@@ -33,20 +25,33 @@ type PubProxyResponse struct {
 	Count int `json:"count"`
 }
 
-type APIProvider struct {
-	PubProxy    string
-	ProxyScrape string
-}
+func APICall() ([]string, error) { // get proxies
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	logger = slog.With("logID", "proxyAPICALL")
 
-var OSLIST = []osType{
-	{
-		Linux:   "FireFox",
-		Windows: "FireFox",
-	},
-	{
-		Linux:   "FireFox",
-		Windows: "FireFox",
-	},
+	var allProxies []string
+
+	pubProxies, err := FetchPubProxy(logger)
+	logger.Debug("Fetching from PubProxy.com")
+	if err == nil {
+		allProxies = append(allProxies, pubProxies...)
+		return allProxies, nil
+	} else {
+		logger.Error("Failed to fetch from PubProxy.com", "error", err)
+	}
+	logger.Debug("Fetching from ProxyScrape.com")
+	proxies, err := FetchProxyScrape(logger)
+	if len(proxies) == 0 {
+		logger.Error("Failed to get list from proxy scrape", "error", err)
+		return nil, err
+	}
+	allProxies = append(allProxies, proxies...)
+	if len(allProxies) == 0 {
+		logger.Error("NO PROXIES FOUND FROM BOTH SITES CHECK FIREWALL / ISP services")
+		return nil, err
+	}
+	return allProxies, nil
 }
 
 func FetchPubProxy(logger *slog.Logger) ([]string, error) {
@@ -99,13 +104,14 @@ func FetchProxyScrape(logger *slog.Logger) ([]string, error) {
 		logger.Error("Failed to read response body", "error", err)
 		return nil, fmt.Errorf("ProxyScrape response read failed: %w", err)
 	}
-	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	rawString := string(body)
+	lines := strings.SplitSeq(rawString, "\n")
+	for line := range lines {
 		if line != "" {
-			proxies = append(proxies, line)
+			trimmed := strings.Trim(line, "\r")
+			proxies = append(proxies, trimmed)
 		}
 	}
+
 	return proxies, nil
 }

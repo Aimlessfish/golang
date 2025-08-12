@@ -1,75 +1,55 @@
+/* Written by Will Meekin */
+/* This scrapes two proxy api providers and returns as many working proxies as possile */
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
 	"time"
 
-	"./apiCalls"
+	"proxyHandler/apiCalls"
 )
 
-const (
-	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
-	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
-)
-
-// change this to getProxy )[]string, error) {}
 // production only
+
+/*
+type flags struct {
+	returnType int
+}
+*/
+
+/* change this to getProxy() ([]string, error) {
+	flag.int("type", 0, "return type 0 == 1 PROXY || 1 == LIST OF PROXIES")
+	*** main logic here ****
+
+	return proxies, nil
+}*/
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	logger = slog.With("logID", "copyFile")
+	logger = slog.With("logID", "Main")
 
-	proxies, err := APICall()
+	proxies, err := apiCalls.APICall()
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 	}
 
+	fmt.Println("Testing....")
 	workingProxies, err := TestProxy(proxies)
 	if err != nil {
 		logger.Error("Failed to test proxies", "error", err)
 	}
 	if len(workingProxies) == 0 {
-		logger.Error("No working proxies found")
+		logger.Error("No working proxies found", "error", err)
 	}
-
+	fmt.Println("Output:")
 	for _, proxy := range workingProxies {
-		logger.Info(proxy)
+		fmt.Println(proxy)
 	}
 
-}
-
-func APICall() ([]string, error) { // get proxies
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With("logID", "proxyAPICALL")
-
-	var allProxies []string
-
-	pubProxies, err := apiCalls.FetchPubProxy(logger)
-	if err == nil {
-		allProxies = append(allProxies, pubProxies...)
-		return allProxies, nil
-	} else {
-		logger.Error("Failed to fetch from PubProxy.com", "error", err)
-	}
-	if len(allProxies) != 0 {
-		logger.Error("Failed to scrape PubProxy API")
-		return nil, nil
-	}
-	proxies, err := apiCalls.FetchProxyScrape(logger)
-	allProxies = append(allProxies, proxies...)
-	if len(proxies) == 0 {
-		logger.Error("Failed to get list from proxy scrape", "error", err)
-	}
-	if len(allProxies) == 0 {
-		logger.Error("NO PROXIES FOUND FROM BOTH SITES CHECK FIREWALL / ISP services")
-		os.Exit(1)
-	}
-
-	// Fallback: plain text)
-	return allProxies, nil
 }
 
 func TestProxy(proxies []string) ([]string, error) {
@@ -88,11 +68,6 @@ func TestProxy(proxies []string) ([]string, error) {
 		conn.Close()
 
 		workingProxies = append(workingProxies, proxy)
-
-		if len(workingProxies) == 1 { // EDIT THIS TO RETURN AS MANY AS YOU WANT
-			logger.Info("Current Proxy: " + proxy)
-			break
-		}
 
 	}
 
