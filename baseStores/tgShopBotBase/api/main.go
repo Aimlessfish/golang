@@ -67,6 +67,7 @@ func ConnectAPI() (string, error) {
 		logger.Warn("Error running NewBot", "Error", err.Error())
 		return "Failed to connect API key to TGAPI", err
 	}
+	logger.Info("Connected to bot " + bot.Self.UserName)
 
 	update_channel := tgbotapi.NewUpdate(0)
 	update_channel.Timeout = 60
@@ -82,5 +83,5 @@ func ConnectAPI() (string, error) {
 		}
 	}
 
-	return "Successfully connected to: " + bot.Self.UserName, err
+	return "", err
 }

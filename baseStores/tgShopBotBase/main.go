@@ -13,9 +13,7 @@ func main() {
 
 	response, err := api.ConnectAPI()
 	if err != nil {
-		logger.Error("Failed to connect.", "error", err.Error())
-	} else {
-		logger.Info("Connected to: " + response)
+		logger.Error("Failed to connect.", response, err.Error())
+		os.Exit(1)
 	}
-
 }
