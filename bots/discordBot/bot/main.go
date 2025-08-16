@@ -63,8 +63,9 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		GuildID:   message.GuildID,
 	})
 
-	// if message.Content == "start" {
-	// 	server.ChannelMessageSend(message.ChannelID, "Not ready yet!")
-	// }
+	if message.Content == "list" || message.Content == "!list" || message.Content == "List" || message.Content == "/list" {
+		server.ChannelMessageSend(message.ChannelID, "Not ready yet!")
+		//logic to call all available public servers.
+	}
 
 }
