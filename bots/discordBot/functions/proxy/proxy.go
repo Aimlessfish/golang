@@ -2,7 +2,7 @@
 /* needs modifying for this project */
 /* This scrapes two proxy api providers and returns as many working proxies as possile */
 
-package proxyHandler
+package proxy
 
 import (
 	"fmt"
