@@ -5,7 +5,6 @@
 package proxyHandler
 
 import (
-	"flag"
 	"fmt"
 	"log/slog"
 	"net"
@@ -15,19 +14,12 @@ import (
 	"proxyHandler/apiCalls"
 )
 
-func ProxyHandler() {
+func ProxyHandler(mode int) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 	logger = slog.With("logID", "Main")
 
-	mode := flag.Int("mode", 0, "return type 0 == PROXY LIST || 1 == 1 PROXY")
-	flag.Parse()
-	if *mode > 1 {
-		logger.Error("Options are 0 for list of proxy || 1 single proxy")
-		os.Exit(1)
-	}
-
-	proxies, err := apiCalls.APICall(*mode)
+	proxies, err := apiCalls.APICall(mode)
 	if err != nil {
 		logger.Error("Failed to run APICall", "error", err)
 	}
