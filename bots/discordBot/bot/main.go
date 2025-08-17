@@ -70,13 +70,13 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		//logic to call all available public servers.
 	}
 
-	if message.Content == "proxy" || message.Content == "get proxy" {
+	if message.Content == "http proxy" || message.Content == "get http proxy" {
 		proxies := getproxy.ProxyHandler(1)
 		for _, proxy := range proxies {
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	if message.Content == "proxylist" || message.Content == "get proxy list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
+	if message.Content == "http proxylist" || message.Content == "get http list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
 		proxies := getproxy.ProxyHandler(0)
 		for _, proxy := range proxies {
 			server.ChannelMessageSend(message.ChannelID, proxy)
