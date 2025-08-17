@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	getproxy "discordBot/functions/proxy"
 	initlogger "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
@@ -58,19 +59,27 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		return
 	}
 
-	server.ChannelMessageSendReply(message.ChannelID, "Not ready yet", &discordgo.MessageReference{
-		MessageID: message.ID,
-		ChannelID: message.ChannelID,
-		GuildID:   message.GuildID,
-	})
+	// server.ChannelMessageSendReply(message.ChannelID, "Not ready yet", &discordgo.MessageReference{
+	// 	MessageID: message.ID,
+	// 	ChannelID: message.ChannelID,
+	// 	GuildID:   message.GuildID,
+	// })
 
 	if message.Content == "list" || message.Content == "!list" || message.Content == "List" || message.Content == "/list" {
 		server.ChannelMessageSend(message.ChannelID, "Not ready yet!")
 		//logic to call all available public servers.
 	}
 
-	if message.Content == "proxy" {
-
+	if message.Content == "proxy" || message.Content == "get proxy" {
+		proxies := getproxy.ProxyHandler(1)
+		for _, proxy := range proxies {
+			server.ChannelMessageSend(message.ChannelID, proxy)
+		}
 	}
-
+	if message.Content == "proxylist" || message.Content == "get proxy list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
+		proxies := getproxy.ProxyHandler(0)
+		for _, proxy := range proxies {
+			server.ChannelMessageSend(message.ChannelID, proxy)
+		}
+	}
 }

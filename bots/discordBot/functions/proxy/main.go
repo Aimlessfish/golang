@@ -15,7 +15,7 @@ import (
 	initlogger "discordBot/util"
 )
 
-func ProxyHandler(mode int) {
+func ProxyHandler(mode int) []string {
 	logger := initlogger.LoggerInit("logID", "Main")
 
 	proxies, err := apiCalls.APICall(mode)
@@ -26,6 +26,8 @@ func ProxyHandler(mode int) {
 	for _, proxy := range workingProxies {
 		fmt.Println(proxy)
 	}
+
+	return workingProxies
 
 }
 
