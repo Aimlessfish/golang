@@ -1,8 +1,8 @@
 package main
 
 import (
-	bot "golang/bots/discordBot/bot"
-	initlogger "golang/utilities/initLogger"
+	bot "discordBot/bot"
+	initlogger "discordBot/util"
 )
 
 func main() {

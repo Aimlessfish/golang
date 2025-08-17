@@ -1,4 +1,4 @@
-module golang
+module discordBot
 
 go 1.24.4
 
