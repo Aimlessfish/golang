@@ -11,13 +11,12 @@ import (
 	"os"
 	"time"
 
-	"proxyHandler/apiCalls"
+	apiCalls "discordBot/functions/proxy/apicalls"
+	initlogger "discordBot/util"
 )
 
 func ProxyHandler(mode int) {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With("logID", "Main")
+	logger := initlogger.LoggerInit("logID", "Main")
 
 	proxies, err := apiCalls.APICall(mode)
 	if err != nil {
