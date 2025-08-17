@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -54,6 +55,8 @@ func ConnectAPI(logger *slog.Logger) error {
 }
 
 func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate) {
+	userID := message.Author.ID
+	channelID := message.ChannelID
 
 	if message.Author.ID == server.State.User.ID {
 		return
@@ -76,10 +79,40 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	// if message.Content == "http proxylist" || message.Content == "get http list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
-	// 	proxies := getproxy.ProxyHandler(0)
-	// 	for _, proxy := range proxies {
-	// 		server.ChannelMessageSend(message.ChannelID, proxy)
-	// 	}
-	// }
+	if message.Content == "http proxy list" || message.Content == "get http list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
+		proxies := getproxy.ProxyHandler(0)
+		for _, proxy := range proxies {
+			server.ChannelMessageSend(message.ChannelID, proxy)
+		}
+	}
+	if message.Content == "clear" {
+		var msgmap []string
+		limit := 100
+
+		for {
+			messages, err := server.ChannelMessages(channelID, limit, "", "", "")
+			if err != nil {
+				server.ChannelMessageSend(channelID, fmt.Sprintf("failed to load previous messages! %v ", err))
+				break
+			}
+
+			if len(messages) == 0 {
+				break
+			}
+
+			for _, msg := range messages {
+				if msg.Author.ID == userID || msg.Author.ID == server.State.User.ID {
+				//logic here for working out 14 day limit 
+
+					//if >14 days print("delete manually")
+
+			}
+
+		}
+
+		err := server.ChannelMessagesBulkDelete(message.ChannelID, msgmap)
+		if err != nil {
+			server.ChannelMessageSend(channelID, fmt.Sprintf("Failed %v", err))
+		}
+	}
 }

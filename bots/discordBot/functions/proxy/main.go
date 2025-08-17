@@ -49,6 +49,9 @@ func TestProxy(proxies []string) ([]string, error) {
 		workingProxies = append(workingProxies, proxy)
 
 	}
+	if len(workingProxies) >= 20 {
+		return workingProxies, nil
+	}
 
 	return workingProxies, nil
 }
@@ -65,5 +68,6 @@ func testAndList(proxies []string) []string {
 	if len(workingProxies) == 0 {
 		logger.Error("No working proxies found", "error", err)
 	}
+
 	return workingProxies
 }
