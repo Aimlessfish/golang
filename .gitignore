@@ -48,3 +48,15 @@ bots/regBot/bin/firefox/gmp-clearkey/0.1/libclearkey.so
 bots/regBot/bin/firefox/gmp-clearkey/0.1/libclearkey.so.sig
 bots/regBot/bin/firefox/gmp-clearkey/0.1/manifest.json
 bots/regBot/bin/firefox/icons/updater.png
+bots/regBot/bin/firefox/crashreporter.ini
+bots/regBot/bin/firefox/libipcclientcerts.so
+bots/regBot/bin/firefox/libnssckbi.so
+bots/regBot/bin/firefox/minidump-analyzer
+bots/regBot/bin/firefox/Throbber-small.gif
+bots/regBot/bin/firefox/browser/crashreporter-override.ini
+bots/regBot/bin/firefox/browser/features/formautofill@mozilla.org.xpi
+bots/regBot/bin/firefox/browser/features/pictureinpicture@mozilla.org.xpi
+bots/regBot/bin/firefox/browser/features/screenshots@mozilla.org.xpi
+bots/regBot/bin/firefox/browser/features/webcompat-reporter@mozilla.org.xpi
+bots/regBot/bin/firefox/browser/features/webcompat@mozilla.org.xpi
+bots/regBot/bin/firefox-119.0.tar.bz2

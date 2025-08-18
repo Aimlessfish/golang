@@ -51,6 +51,19 @@ func checkOS() (string, error) {
 	return os, nil
 }
 
+func DetectBrowserAndVersion(osType string) (string, string, error) {
+	switch osType {
+	case "windows":
+		return "FireFox", "latest", nil
+	case "linux":
+		return "FireFox", "latest", nil
+	case "mac":
+		return "", "", fmt.Errorf("fuck off %v", osType)
+	default:
+		return "", "", fmt.Errorf("unsupported OS: %v", osType)
+	}
+}
+
 func fireWall(port string, logger *slog.Logger) (bool, error) {
 	logger = logger.With("FireWall", "Utilities")
 
@@ -123,8 +136,7 @@ user_pref("network.proxy.ssl_port", %v);
 		"browserName":     "firefox",
 		"firefox_profile": encodedProfile,
 	}
-	localHost := "http://localhost:4444"
-	wd, err := selenium.NewRemote(caps, localHost)
+	wd, err := selenium.NewRemote(caps, servicePort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to geckodriver: %w", err)
 	}
@@ -218,10 +230,7 @@ user_pref("network.proxy.ssl_port", %d);
 	}
 	caps["moz:firefoxOptions"] = firefoxCaps
 
-	// Connect to WebDriver
-	localHost := "http://localhost:4444"
-
-	wd, err := selenium.NewRemote(caps, localHost)
+	wd, err := selenium.NewRemote(caps, servicePort)
 	if err != nil {
 		logger.Error("Failed to create selenium WebDriver", "error", err)
 		return nil, nil, err

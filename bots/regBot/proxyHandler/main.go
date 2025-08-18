@@ -1,17 +1,11 @@
 package proxyHandler
 
 import (
-	"archive/zip"
-	"bytes"
-	"encoding/base64"
 	"fmt"
-	"io"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"regbot/proxyHandler/apiCalls"
@@ -24,6 +18,7 @@ const (
 	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
 	LINUX_GECKO_PATH = "./bin/geckodriver"
 	GECKO_PORT       = 5555
+	PORT_STRING      = "5555"
 	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
 	PUB_PROXY_API    = "http://pubproxy.com/api/proxy?https=true&type=http&format=json"
 )
@@ -50,7 +45,7 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 		return nil, nil, fmt.Errorf("no working proxies found")
 	}
 
-	browserType, version, err := DetectBrowserAndVersion(osType)
+	browserType, version, err := util.DetectBrowserAndVersion(osType)
 	if err != nil {
 		logger.Error("Failed to detect browser and version", "error", err)
 		return nil, nil, err
@@ -68,14 +63,14 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 				logger.Error("Failed to start geckodriver service", "error", err)
 				return nil, nil, err
 			}
-		}
-		driver, err = BrowserProxyWindows(browserType, proxy)
-		if err != nil {
-			logger.Error("Failed to create proxied browser session", "error", err)
-			if service != nil {
-				service.Stop()
+			driver, err = util.BrowserProxyWindows(browserType, PORT_STRING, proxy, logger)
+			if err != nil {
+				logger.Error("Failed to create proxied browser session", "error", err)
+				if service != nil {
+					service.Stop()
+				}
+				return driver, service, err
 			}
-			return nil, nil, err
 		}
 		gecko_port := strconv.Itoa(GECKO_PORT)
 		driver, service, err := util.BrowserProxyLinux(LINUX_FF_BINARY, LINUX_GECKO_PATH, browserType, gecko_port, proxy, logger)
@@ -151,85 +146,4 @@ func TestProxy(proxies []string) ([]string, error) {
 	}
 
 	return workingProxies, nil
-}
-
-func DetectBrowserAndVersion(osType string) (string, string, error) {
-	switch osType {
-	case "windows":
-		return "FireFox", "latest", nil
-	case "linux":
-		return "FireFox", "latest", nil
-	case "mac":
-		return "Chrome", "latest", nil
-	default:
-		return "", "", fmt.Errorf("unsupported OS: %s", osType)
-	}
-}
-
-func BrowserProxyWindows(browserType, workingProxy string) (selenium.WebDriver, error) {
-	logger := util.LoggerInit("ID", "ApplyBrowserProxy")
-
-	profileDir, err := os.MkdirTemp("", "firefox-profile")
-	if err != nil {
-		logger.Error("Failed to make temp dir")
-	}
-	defer os.RemoveAll(profileDir)
-
-	parts := strings.Split(workingProxy, ":")
-	proxyHost := parts[0]
-	proxyPort := parts[1]
-
-	prefs := fmt.Sprintf(`
-user_pref("general.useragent.override", "MyCustomUserAgent/1.0");
-user_pref("network.proxy.type", 1);
-user_pref("network.proxy.http", "%v");
-user_pref("network.proxy.http_port", %v);
-user_pref("network.proxy.ssl", "%v");
-user_pref("network.proxy.ssl_port", %v);
-`, proxyHost, proxyPort, proxyHost, proxyPort)
-
-	err = os.WriteFile(filepath.Join(profileDir, "prefs.js"), []byte(prefs), 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	zipWriter := zip.NewWriter(&buf)
-	filepath.Walk(profileDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		relPath, _ := filepath.Rel(profileDir, path)
-		w, err := zipWriter.Create(relPath)
-		if err != nil {
-			return err
-		}
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		_, err = io.Copy(w, f)
-		return err
-	})
-	zipWriter.Close()
-
-	// Encode profile as base64
-	encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
-
-	// Set capabilities
-	caps := selenium.Capabilities{
-		"browserName":     "firefox",
-		"firefox_profile": encodedProfile,
-	}
-
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%v", GECKO_PORT))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to geckodriver: %v", err)
-	}
-
-	return wd, nil
 }
