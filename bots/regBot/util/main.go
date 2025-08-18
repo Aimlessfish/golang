@@ -51,19 +51,6 @@ func checkOS() (string, error) {
 	return os, nil
 }
 
-func DetectBrowserAndVersion(osType string) (string, string, error) {
-	switch osType {
-	case "windows":
-		return "FireFox", "latest", nil
-	case "linux":
-		return "FireFox", "latest", nil
-	case "mac":
-		return "", "", fmt.Errorf("fuck off %v", osType)
-	default:
-		return "", "", fmt.Errorf("unsupported OS: %v", osType)
-	}
-}
-
 func fireWall(port string, logger *slog.Logger) (bool, error) {
 	logger = logger.With("FireWall", "Utilities")
 
@@ -79,7 +66,7 @@ func fireWall(port string, logger *slog.Logger) (bool, error) {
 	return true, nil
 }
 
-func BrowserProxyWindows(browserType, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, error) {
+func BrowserProxyWindows(servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, error) {
 	logger = logger.With("ID", "ApplyBrowserProxy")
 
 	profileDir, err := os.MkdirTemp("", "firefox-profile")
@@ -144,9 +131,8 @@ user_pref("network.proxy.ssl_port", %v);
 	return wd, nil
 }
 
-func BrowserProxyLinux(binaryPath, driverPath, browserType, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, *selenium.Service, error) {
+func BrowserProxyLinux(binaryPath, driverPath, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, *selenium.Service, error) {
 	logger = logger.With("component", "BrowserProxyLinux")
-	// Start GeckoDriver service
 	servicePortInt, err := strconv.Atoi(servicePort)
 	if err != nil {
 		logger.Error("Failed to convert servicePort", "error", err)
@@ -178,10 +164,10 @@ func BrowserProxyLinux(binaryPath, driverPath, browserType, servicePort, working
 	prefs := fmt.Sprintf(`
 user_pref("general.useragent.override", "MyCustomUserAgent/1.0");
 user_pref("network.proxy.type", 1);
-user_pref("network.proxy.http", "%s");
-user_pref("network.proxy.http_port", %d);
-user_pref("network.proxy.ssl", "%s");
-user_pref("network.proxy.ssl_port", %d);
+user_pref("network.proxy.http", "%v");
+user_pref("network.proxy.http_port", %v);
+user_pref("network.proxy.ssl", "%v");
+user_pref("network.proxy.ssl_port", %v);
 `, proxyHost, proxyPort, proxyHost, proxyPort)
 
 	err = os.WriteFile(filepath.Join(profileDir, "prefs.js"), []byte(prefs), 0644)
@@ -219,18 +205,18 @@ user_pref("network.proxy.ssl_port", %d);
 	}
 	zipWriter.Close()
 
-	// encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
+	encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	// Setup Firefox capabilities
 
 	caps := selenium.Capabilities{"browserName": "firefox"}
 	firefoxCaps := map[string]interface{}{
-		"binary": binaryPath,
-		// "profile": encodedProfile,
+		"binary":  binaryPath,
+		"profile": encodedProfile,
 	}
 	caps["moz:firefoxOptions"] = firefoxCaps
 
-	wd, err := selenium.NewRemote(caps, servicePort)
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%v/wd/hub", servicePort))
 	if err != nil {
 		logger.Error("Failed to create selenium WebDriver", "error", err)
 		return nil, nil, err

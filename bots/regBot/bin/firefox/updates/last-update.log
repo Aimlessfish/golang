@@ -1,0 +1,11 @@
+2025-08-18 17:16:22+0100: Performing a replace request
+2025-08-18 17:16:22+0100: PATCH DIRECTORY /home/wm/Documents/golang/bots/regBot/bin/firefox/updates/0
+2025-08-18 17:16:22+0100: INSTALLATION DIRECTORY /home/wm/Documents/golang/bots/regBot/bin/firefox
+2025-08-18 17:16:22+0100: WORKING DIRECTORY /home/wm/Documents/golang/bots/regBot/bin/firefox/updated
+2025-08-18 17:16:22+0100: Begin moving destDir (/home/wm/Documents/golang/bots/regBot/bin/firefox) to tmpDir (/home/wm/Documents/golang/bots/regBot/bin/firefox.bak)
+2025-08-18 17:16:22+0100: rename_file: proceeding to rename the directory
+2025-08-18 17:16:22+0100: Begin moving newDir (/home/wm/Documents/golang/bots/regBot/bin/firefox.bak/updated) to destDir (/home/wm/Documents/golang/bots/regBot/bin/firefox)
+2025-08-18 17:16:22+0100: rename_file: proceeding to rename the directory
+2025-08-18 17:16:22+0100: Now, remove the tmpDir
+2025-08-18 17:16:22+0100: succeeded
+2025-08-18 17:16:22+0100: calling QuitProgressUI
