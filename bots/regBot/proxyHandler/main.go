@@ -61,14 +61,14 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 		}
 	}
 
-	driver, service, err = util.BrowserProxyLinux(LINUX_GECKO_PATH, LINUX_FF_BINARY, PORT_STRING, proxy, logger)
+	driver, err = util.BrowserProxyLinux(LINUX_FF_BINARY, LINUX_GECKO_PATH, PORT_STRING, proxy, logger)
 	if err != nil {
 		logger.Error("Failed to run Linux Browser", "error", err)
 		os.Exit(1)
 	}
 	defer driver.Quit()
 	defer service.Stop()
-	return driver, service, nil
+	return driver, nil, nil
 }
 
 func APICall(osType string) ([]string, error) { // get proxies

@@ -78,7 +78,7 @@ func BrowserProxyWindows(servicePort, workingProxy string, logger *slog.Logger) 
 	parts := strings.Split(workingProxy, ":")
 	proxyHost := parts[0]
 	proxyPort := parts[1]
-
+	// logger.Info("proxy parts HOST, "+proxyHost, "PORT:", proxyPort)
 	prefs := fmt.Sprintf(`
 user_pref("general.useragent.override", "MyCustomUserAgent/1.0");
 user_pref("network.proxy.type", 1);
@@ -131,33 +131,25 @@ user_pref("network.proxy.ssl_port", %v);
 	return wd, nil
 }
 
-func BrowserProxyLinux(binaryPath, driverPath, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, *selenium.Service, error) {
+func BrowserProxyLinux(binaryPath, driverPath, servicePort, workingProxy string, logger *slog.Logger) (selenium.WebDriver, error) {
 	logger = logger.With("component", "BrowserProxyLinux")
-	servicePortInt, err := strconv.Atoi(servicePort)
-	if err != nil {
-		logger.Error("Failed to convert servicePort", "error", err)
-	}
-	service, err := selenium.NewGeckoDriverService(driverPath, servicePortInt)
-	if err != nil {
-		logger.Error("Failed to start geckodriver service", "error", err)
-		return nil, nil, err
-	}
 	// Parse proxy
 	parts := strings.Split(workingProxy, ":")
 	if len(parts) != 2 {
-		return nil, nil, fmt.Errorf("invalid proxy format: %s", workingProxy)
+		return nil, fmt.Errorf("invalid proxy format: %s", workingProxy)
 	}
 	proxyHost := parts[0]
 	proxyPort, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid proxy port: %v", err)
+		return nil, fmt.Errorf("invalid proxy port: %v", err)
 	}
+	logger.Info("proxy parts HOST, "+proxyHost, "PORT:", proxyPort)
 
 	// Build Firefox preferences
 	profileDir, err := os.MkdirTemp("", "firefox-profile")
 	if err != nil {
 		logger.Error("Failed to create temp Firefox profile dir", "error", err)
-		return nil, nil, err
+		return nil, err
 	}
 	defer os.RemoveAll(profileDir)
 
@@ -173,7 +165,7 @@ user_pref("network.proxy.ssl_port", %v);
 	err = os.WriteFile(filepath.Join(profileDir, "prefs.js"), []byte(prefs), 0644)
 	if err != nil {
 		logger.Error("Failed to write prefs.js", "error", err)
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Zip and encode the profile
@@ -201,26 +193,32 @@ user_pref("network.proxy.ssl_port", %v);
 	})
 	if err != nil {
 		logger.Error("Failed to zip profile", "error", err)
-		return nil, nil, err
+		return nil, err
 	}
 	zipWriter.Close()
 
-	encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
+	// encodedProfile := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	// Setup Firefox capabilities
 
+	logger.Info("using path", binaryPath, "for binary..")
 	caps := selenium.Capabilities{"browserName": "firefox"}
 	firefoxCaps := map[string]interface{}{
-		"binary":  binaryPath,
-		"profile": encodedProfile,
+		"binary": binaryPath,
+		"args":   []string{"-headless"},
+		// "profile": encodedProfile,
 	}
 	caps["moz:firefoxOptions"] = firefoxCaps
 
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%v/wd/hub", servicePort))
+	os.Setenv("NO_PROXY", "localhost,127.0.0.1")
+	os.Setenv("http_proxy", "")
+	os.Setenv("https_proxy", "")
+	logger.Info("Attempting to connect to Geckodriver", "url", "http://localhost:"+servicePort+"/wd/hub")
+	wd, err := selenium.NewRemote(caps, "http://localhost:"+servicePort)
 	if err != nil {
 		logger.Error("Failed to create selenium WebDriver", "error", err)
-		return nil, nil, err
+		return nil, err
 	}
 
-	return wd, service, nil
+	return wd, nil
 }
