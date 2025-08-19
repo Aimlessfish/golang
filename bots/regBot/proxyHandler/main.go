@@ -14,8 +14,8 @@ import (
 
 const (
 	WIN_GECKO_PATH   = "C:\\Users\\notWill\\Documents\\GitHub\\automation\\golang\\bots\\regBot\\bin\\geckodriver.exe"
-	LINUX_GECKO_PATH = "./bin/geckodriver"
 	LINUX_FF_BINARY  = "./bin/firefox/firefox"
+	LINUX_GECKO_PATH = "./bin/geckodriver"
 	GECKO_PORT       = 5555
 	PORT_STRING      = "5555"
 	PROXY_SCRAPE_API = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all&skip=0&limit=500"
@@ -54,21 +54,27 @@ func GetProxiedSession(osType string) (selenium.WebDriver, *selenium.Service, er
 		driver, err = util.BrowserProxyWindows(PORT_STRING, proxy, logger)
 		if err != nil {
 			logger.Error("Failed to create proxied browser session", "error", err)
-			if service != nil {
-				service.Stop()
-			}
-			return driver, service, err
+			defer func() {
+				if driver != nil {
+					driver.Quit()
+				}
+				if service != nil {
+					service.Stop()
+				}
+			}()
+			return driver, service, nil
 		}
+
 	}
 
-	driver, err = util.BrowserProxyLinux(LINUX_FF_BINARY, LINUX_GECKO_PATH, PORT_STRING, proxy, logger)
+	driver, service, err = util.BrowserProxyLinux(LINUX_FF_BINARY, LINUX_GECKO_PATH, PORT_STRING, proxy, logger)
 	if err != nil {
 		logger.Error("Failed to run Linux Browser", "error", err)
 		os.Exit(1)
 	}
 	defer driver.Quit()
 	defer service.Stop()
-	return driver, nil, nil
+	return driver, service, nil
 }
 
 func APICall(osType string) ([]string, error) { // get proxies

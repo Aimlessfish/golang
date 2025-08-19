@@ -4,7 +4,6 @@ import (
 	"os"
 	getproxy "regbot/proxyHandler"
 	util "regbot/util"
-	"time"
 )
 
 const (
@@ -17,6 +16,7 @@ func main() {
 	userOS, err := util.ServerInit(GECKO_PORT, logger)
 	if err != nil {
 		logger.Error("Server init failed", "error", err)
+		os.Exit(1)
 	}
 
 	driver, service, err := getproxy.GetProxiedSession(userOS)
@@ -42,7 +42,5 @@ func main() {
 		logger.Error("Failed to get url", "error", err)
 		os.Exit(1)
 	}
-	time.Sleep(20 * time.Second)
-	driver.Quit()
 
 }
