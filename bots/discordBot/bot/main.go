@@ -5,17 +5,19 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 
 	getproxy "discordBot/functions/proxy"
-	initlogger "discordBot/util"
+	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
 
 func getToken() string {
-	logger := initlogger.LoggerInit("GET BOT", "BOT")
+	logger := util.LoggerInit("GET BOT", "BOT")
 	logger.Info("Getting bot token")
 
 	err := godotenv.Load()
@@ -55,6 +57,7 @@ func ConnectAPI(logger *slog.Logger) error {
 }
 
 func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate) {
+	logger := util.LoggerInit("messageHandler", "commands")
 	userID := message.Author.ID
 	channelID := message.ChannelID
 
@@ -86,7 +89,6 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 	if message.Content == "clear" {
-		var msgmap []string
 		limit := 100
 
 		for {
@@ -101,18 +103,43 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 
 			for _, msg := range messages {
-				if msg.Author.ID == userID || msg.Author.ID == server.State.User.ID {
-				//logic here for working out 14 day limit 
-
-					//if >14 days print("delete manually")
+				if msg.Author.ID != userID {
+					v, err := messageTTL(msg.ID)
+					if !v || err != nil {
+						logger.Error("TTL expired", "error", err)
+						continue
+					} else {
+						err = server.ChannelMessageDelete(message.ChannelID, msg.ID)
+						if err != nil {
+							continue
+						}
+					}
+				} else {
+					continue
+				}
 
 			}
 
 		}
-
-		err := server.ChannelMessagesBulkDelete(message.ChannelID, msgmap)
-		if err != nil {
-			server.ChannelMessageSend(channelID, fmt.Sprintf("Failed %v", err))
-		}
 	}
+}
+
+func messageTTL(msgID string) (bool, error) {
+	logger := util.LoggerInit("MAIN", "messageTLL")
+	const discordEpoch = 1420070400000
+
+	id64, err := strconv.ParseInt(msgID, 10, 64)
+	if err != nil {
+		logger.Error("Failed to parse Message Date from msg.ID", "error", err)
+		os.Exit(1)
+	}
+
+	timestamp := (id64 >> 22) + discordEpoch
+	messageTime := time.UnixMilli(timestamp)
+
+	if time.Since(messageTime) > (14 * 24 * time.Hour) {
+		return false, nil
+	}
+
+	return true, nil
 }
