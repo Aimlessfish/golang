@@ -68,23 +68,13 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		GuildID:   message.GuildID,
 	})
 
-	if message.Content == "list" || message.Content == "!list" || message.Content == "List" || message.Content == "/list" {
-		server.ChannelMessageSend(message.ChannelID, "Not ready yet!")
-		//logic to call all available public servers.
-	}
-
 	if message.Content == "!proxy" || message.Content == "Proxy" || message.Content == "http proxy" || message.Content == "proxy" || message.Content == "get http proxy" {
 		proxies := getproxy.ProxyHandler(1)
 		for _, proxy := range proxies {
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	if message.Content == "http proxy list" || message.Content == "get http list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
-		proxies := getproxy.ProxyHandler(0)
-		for _, proxy := range proxies {
-			server.ChannelMessageSend(message.ChannelID, proxy)
-		}
-	}
+
 	if message.Content == "clear" {
 		var msgmap []string
 		limit := 100
@@ -102,12 +92,13 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 
 			for _, msg := range messages {
 				if msg.Author.ID == userID || msg.Author.ID == server.State.User.ID {
-				//logic here for working out 14 day limit 
+					//logic here for working out 14 day limit
 
 					//if >14 days print("delete manually")
 
-			}
+				}
 
+			}
 		}
 
 		err := server.ChannelMessagesBulkDelete(message.ChannelID, msgmap)
