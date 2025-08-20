@@ -5,38 +5,17 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
-	"time"
 
 	getproxy "discordBot/functions/proxy"
 	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
-
-func getToken() string {
-	logger := util.LoggerInit("GET BOT", "BOT")
-	logger.Info("Getting bot token")
-
-	err := godotenv.Load()
-	if err != nil {
-		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
-		return "broke mate"
-	} else {
-		token := os.Getenv("TOKEN")
-		if len(token) == 0 {
-			panic("Token length == 0!")
-		} else {
-			return token
-		}
-	}
-}
 
 func ConnectAPI(logger *slog.Logger) error {
 	logger = logger.With("Bot", "ConnectAPI")
-	api_key := getToken()
+	api_key := util.GetToken()
 
 	discord, err := discordgo.New("Bot " + api_key)
 	if err != nil {
@@ -104,7 +83,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 
 			for _, msg := range messages {
 				if msg.Author.ID != userID {
-					v, err := messageTTL(msg.ID)
+					v, err := util.MessageTTL(msg.ID)
 					if !v || err != nil {
 						logger.Error("TTL expired", "error", err)
 						continue
@@ -122,24 +101,4 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 
 		}
 	}
-}
-
-func messageTTL(msgID string) (bool, error) {
-	logger := util.LoggerInit("MAIN", "messageTLL")
-	const discordEpoch = 1420070400000
-
-	id64, err := strconv.ParseInt(msgID, 10, 64)
-	if err != nil {
-		logger.Error("Failed to parse Message Date from msg.ID", "error", err)
-		os.Exit(1)
-	}
-
-	timestamp := (id64 >> 22) + discordEpoch
-	messageTime := time.UnixMilli(timestamp)
-
-	if time.Since(messageTime) > (14 * 24 * time.Hour) {
-		return false, nil
-	}
-
-	return true, nil
 }
