@@ -1,12 +1,12 @@
 package bot
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	clear "discordBot/functions/clearbotmsg"
 	getproxy "discordBot/functions/proxy"
 	util "discordBot/util"
 
@@ -36,7 +36,6 @@ func ConnectAPI(logger *slog.Logger) error {
 }
 
 func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate) {
-	logger := util.LoggerInit("messageHandler", "commands")
 	userID := message.Author.ID
 	channelID := message.ChannelID
 
@@ -68,37 +67,9 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 	if message.Content == "clear" {
-		limit := 100
-
-		for {
-			messages, err := server.ChannelMessages(channelID, limit, "", "", "")
-			if err != nil {
-				server.ChannelMessageSend(channelID, fmt.Sprintf("failed to load previous messages! %v ", err))
-				break
-			}
-
-			if len(messages) == 0 {
-				break
-			}
-
-			for _, msg := range messages {
-				if msg.Author.ID != userID {
-					v, err := util.MessageTTL(msg.ID)
-					if !v || err != nil {
-						logger.Error("TTL expired", "error", err)
-						continue
-					} else {
-						err = server.ChannelMessageDelete(message.ChannelID, msg.ID)
-						if err != nil {
-							continue
-						}
-					}
-				} else {
-					continue
-				}
-
-			}
-
+		v := clear.ClearBotMessages(userID, channelID, server, message)
+		if v {
+			server.ChannelMessageSend(message.ChannelID, "cleared messages except this one lol")
 		}
 	}
 }
