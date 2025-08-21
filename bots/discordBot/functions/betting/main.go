@@ -15,6 +15,7 @@ func MatchOdds(server *discordgo.Session, message *discordgo.MessageCreate) erro
 
 	response, err := the_odds.GetTheOddsAPI()
 	if err != nil {
+		server.ChannelMessageSend(message.ChannelID, "Failed. Try again later.")
 		return err
 	}
 

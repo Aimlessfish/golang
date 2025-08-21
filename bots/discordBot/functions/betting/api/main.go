@@ -69,7 +69,8 @@ func GetTheOddsAPI() ([]MatchOdds, error) {
 	}
 	token := os.Getenv("THE_ODDS")
 	if len(token) == 0 {
-		panic("Token length == 0!")
+		logger.Error("Token length == 0!")
+		return nil, err
 	}
 
 	url := "https://api.the-odds-api.com/v4/sports/soccer_epl/odds?apiKey=" + token + "&regions=uk&markets=h2h"
