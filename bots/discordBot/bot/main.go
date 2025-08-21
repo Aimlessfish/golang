@@ -1,41 +1,23 @@
 package bot
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+
 	betting "discordBot/functions/betting"
+	clear "discordBot/functions/clearbotmsg"
 	getproxy "discordBot/functions/proxy"
-	initlogger "discordBot/util"
+	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
-
-func getToken() string {
-	logger := initlogger.LoggerInit("GET BOT", "BOT")
-	logger.Info("Getting bot token")
-
-	err := godotenv.Load()
-	if err != nil {
-		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
-		return "broke mate"
-	} else {
-		token := os.Getenv("TOKEN")
-		if len(token) == 0 {
-			panic("Token length == 0!")
-		} else {
-			return token
-		}
-	}
-}
 
 func ConnectAPI(logger *slog.Logger) error {
 	logger = logger.With("Bot", "ConnectAPI")
-	api_key := getToken()
+	api_key := util.GetToken()
 
 	discord, err := discordgo.New("Bot " + api_key)
 	if err != nil {
@@ -75,36 +57,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-
 	if message.Content == "clear" {
-		var msgmap []string
-		limit := 100
-
-		for {
-			messages, err := server.ChannelMessages(channelID, limit, "", "", "")
-			if err != nil {
-				server.ChannelMessageSend(channelID, fmt.Sprintf("failed to load previous messages! %v ", err))
-				break
-			}
-
-			if len(messages) == 0 {
-				break
-			}
-
-			for _, msg := range messages {
-				if msg.Author.ID == userID || msg.Author.ID == server.State.User.ID {
-					//logic here for working out 14 day limit
-
-					//if >14 days print("delete manually")
-
-				}
-
-			}
-		}
-
-		err := server.ChannelMessagesBulkDelete(message.ChannelID, msgmap)
-		if err != nil {
-			server.ChannelMessageSend(channelID, fmt.Sprintf("Failed %v", err))
+		v := clear.ClearBotMessages(userID, channelID, server, message)
+		if v {
+			server.ChannelMessageSend(message.ChannelID, "cleared messages except this one lol")
 		}
 	}
 
