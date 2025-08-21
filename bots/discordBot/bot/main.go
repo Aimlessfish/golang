@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+
+	betting "discordBot/functions/betting"
 	clear "discordBot/functions/clearbotmsg"
 	getproxy "discordBot/functions/proxy"
 	util "discordBot/util"
@@ -55,16 +57,17 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	if message.Content == "!list" || message.Content == "http proxy list" || message.Content == "get http list" || message.Content == "proxy list" || message.Content == "list proxy" || message.Content == "proxies" {
-		proxies := getproxy.ProxyHandler(0)
-		for _, proxy := range proxies {
-			server.ChannelMessageSend(message.ChannelID, proxy)
-		}
-	}
 	if message.Content == "clear" {
 		v := clear.ClearBotMessages(userID, channelID, server, message)
 		if v {
 			server.ChannelMessageSend(message.ChannelID, "cleared messages except this one lol")
+		}
+	}
+
+	if message.Content == "!Football" || message.Content == "!football" {
+		err := betting.MatchOdds(server, message)
+		if err != nil {
+			server.ChannelMessageSend(channelID, "Failed to retrieve upcoming matches! ")
 		}
 	}
 }
