@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	betting "discordBot/functions/betting"
 	getproxy "discordBot/functions/proxy"
 	initlogger "discordBot/util"
 
@@ -104,6 +105,13 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		err := server.ChannelMessagesBulkDelete(message.ChannelID, msgmap)
 		if err != nil {
 			server.ChannelMessageSend(channelID, fmt.Sprintf("Failed %v", err))
+		}
+	}
+
+	if message.Content == "!Football" || message.Content == "!football" {
+		err := betting.MatchOdds(server, message)
+		if err != nil {
+			server.ChannelMessageSend(channelID, "Failed to retrieve upcoming matches! ")
 		}
 	}
 }
