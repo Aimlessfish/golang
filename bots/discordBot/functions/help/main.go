@@ -3,7 +3,6 @@ package help
 import "github.com/bwmarrin/discordgo"
 
 func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo.MessageCreate) error {
-	server.ChannelMessageSend(channelID, "Bot Commands: ")
 	embeddedMsg := &discordgo.MessageEmbed{
 		Title:       "Bot Help",
 		Description: "All Bot Commands: ",
