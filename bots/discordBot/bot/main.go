@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-
 	betting "discordBot/functions/betting"
 	clear "discordBot/functions/clearbotmsg"
+	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
 	util "discordBot/util"
 
@@ -51,13 +51,16 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		GuildID:   message.GuildID,
 	})
 
+	if message.Content == "!help" || message.Content == "help" || message.Content == "commands" {
+		help.DisplayHelp(channelID, server, message)
+	}
 	if message.Content == "!proxy" || message.Content == "Proxy" || message.Content == "http proxy" || message.Content == "proxy" || message.Content == "get http proxy" {
 		proxies := getproxy.ProxyHandler(1)
 		for _, proxy := range proxies {
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	if message.Content == "clear" {
+	if message.Content == "!clear" {
 		v := clear.ClearBotMessages(userID, channelID, server, message)
 		if v {
 			server.ChannelMessageSend(message.ChannelID, "cleared messages except this one lol")
