@@ -9,7 +9,7 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 		Color:       0x00ffcc,
 		Fields: []*discordgo.MessageEmbedField{
 			{Name: "!help", Value: "Displays this message!"},
-			{Name: "!clear", Value: "Clears 100 bot sent messages!"},
+			{Name: "!clear", Value: "Clears _100_ bot sent messages!"},
 			{Name: "!football", Value: "Pulls all upcoming football matches in the UK and displays odds grouped by bookies and match"},
 			{Name: "!proxy", Value: "Sends 1, tested; working, HTTP proxy."},
 		},
