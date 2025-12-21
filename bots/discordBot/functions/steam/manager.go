@@ -39,7 +39,7 @@ func NewSessionManager(startPort int) *SessionManager {
 
 // AddSession creates and starts a new session with auto-generated ID
 // This method blocks until the user completes the Steam login
-func (sm *SessionManager) AddSession(userID string) (*Session, error) {
+func (sm *SessionManager) AddSession(userID string, profileURL string) (*Session, error) {
 	sm.mutex.Lock()
 
 	// Auto-generate session ID
@@ -66,6 +66,8 @@ func (sm *SessionManager) AddSession(userID string) (*Session, error) {
 	} else {
 		session = NewSession(id, userID, port, debugPort)
 	}
+	// Use helper to set ProfileURL from input (UID or URL)
+	session.SetProfileURLFromInput(profileURL)
 
 	sm.mutex.Unlock()
 
@@ -92,7 +94,7 @@ func (sm *SessionManager) AddSession(userID string) (*Session, error) {
 
 // AddSessionWithTimeout creates a session with auto-removal after specified duration
 func (sm *SessionManager) AddSessionWithTimeout(userID string, timeout time.Duration) (*Session, error) {
-	session, err := sm.AddSession(userID)
+	session, err := sm.AddSession(userID, "")
 	if err != nil {
 		return nil, err
 	}

@@ -148,7 +148,7 @@ func handleBotAdd(s *discordgo.Session, m *discordgo.MessageCreate) {
 	response += "\n_Original message deleted for security_"
 
 	s.ChannelMessageSend(m.ChannelID, response)
-	go cleanupMessages(s, m.ChannelID, 5)
+	// ...existing code...
 }
 
 func handleBotList(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -170,7 +170,7 @@ func handleBotList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	response += "```"
 
 	s.ChannelMessageSend(m.ChannelID, response)
-	go cleanupMessages(s, m.ChannelID, 5)
+	// ...existing code...
 }
 
 func handleBotRemove(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -193,7 +193,7 @@ func handleBotRemove(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Bot account removed: **%s**", username))
-	go cleanupMessages(s, m.ChannelID, 5)
+	// ...existing code...
 }
 
 func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -246,7 +246,14 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Valid Steam profile detected\nTarget Steam ID: `%s`\nDeploying **%d** bot(s)...", steamID, numBots))
 
-	reportURL := fmt.Sprintf("https://help.steampowered.com/en/wizard/HelpWithGameIssue/?appid=730&issueid=1010&playerid=%s", steamID)
+	var profileURL string
+	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
+		profileURL = target
+	} else if isSteam64(steamID) {
+		profileURL = "https://steamcommunity.com/profiles/" + steamID
+	} else {
+		profileURL = "https://steamcommunity.com/id/" + steamID
+	}
 
 	var sessionIDs []string
 	var botNames []string
@@ -256,14 +263,15 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for i := 0; i < numBots && i < len(availableBots); i++ {
 		botName := availableBots[i]
 
-		go func(idx int, account string) {
-			session, err := manager.AddSession(account)
+		// Pass botName as userID, and profileURL as the target profile
+		go func(idx int, botAccount string, targetProfile string) {
+			session, err := manager.AddSession(botAccount, targetProfile)
 			if err != nil {
-				log.Printf("Error creating session for %s: %v", account, err)
+				log.Printf("Error creating session for %s: %v", botAccount, err)
 				return
 			}
-			log.Printf("Session %s created for bot %s", session.ID, account)
-		}(i, botName)
+			log.Printf("Session %s created for bot %s (target profile: %s)", session.ID, botAccount, targetProfile)
+		}(i, botName, profileURL)
 
 		sessionID := fmt.Sprintf("session-%d", i+1)
 		port := 9222 + i
@@ -279,8 +287,8 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, bot := range successList {
 		summary += bot + "\n"
 	}
-	summary += fmt.Sprintf("\nReport URL: `%s`\n", reportURL)
-	summary += "Sessions starting - bots will login and navigate to report page\n\n_Automation in progress_"
+	summary += fmt.Sprintf("\nProfile URL: `%s`\n", profileURL)
+	summary += "Sessions starting - bots will login and navigate to profile page\n\n_Automation in progress_"
 
 	s.ChannelMessageSend(m.ChannelID, summary)
 
@@ -303,7 +311,7 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	reportsMutex.Unlock()
 
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\nReport tracked as: `%s`", reportID))
-	go cleanupMessages(s, m.ChannelID, 10)
+	// ...existing code...
 }
 
 // extractSteamID extracts the Steam ID from various Steam profile URL formats
@@ -356,7 +364,7 @@ func handleReports(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(m.ChannelID, response)
-	go cleanupMessages(s, m.ChannelID, 5)
+	// ...existing code...
 }
 
 func handleSteamHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -375,7 +383,7 @@ func handleSteamHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 _All commands work in DMs only for privacy_`
 
 	s.ChannelMessageSend(m.ChannelID, help)
-	go cleanupMessages(s, m.ChannelID, 3)
+	// ...existing code...
 }
 
 // GetManager returns the global session manager

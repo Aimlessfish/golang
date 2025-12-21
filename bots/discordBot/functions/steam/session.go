@@ -3,10 +3,9 @@ package steam
 import (
 	"context"
 	"discordBot/util"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,25 +16,134 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+// SetProfileURLFromInput sets the ProfileURL field from a UID or a Steam profile URL.
+// If input is a Steam64 UID or custom ID, constructs the profile URL. If input is a valid Steam profile URL, uses it directly.
+func (s *Session) SetProfileURLFromInput(input string) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		log.Printf("[SetProfileURLFromInput] Empty input, setting ProfileURL to empty string")
+		s.ProfileURL = ""
+		return
+	}
+	// If input looks like a Steam profile URL, use it directly
+	if strings.HasPrefix(input, "https://steamcommunity.com/profiles/") || strings.HasPrefix(input, "https://steamcommunity.com/id/") {
+		log.Printf("[SetProfileURLFromInput] Input is full profile URL: %s", input)
+		s.ProfileURL = input
+		return
+	}
+	// If input is a Steam64 ID
+	if isSteam64(input) {
+		log.Printf("[SetProfileURLFromInput] Input is Steam64 ID: %s", input)
+		s.ProfileURL = "https://steamcommunity.com/profiles/" + input
+		return
+	}
+	// Otherwise, treat as custom ID
+	log.Printf("[SetProfileURLFromInput] Input is custom ID: %s", input)
+	s.ProfileURL = "https://steamcommunity.com/id/" + input
+}
+
 // Session represents a logged-in Steam bot session with browser automation
 type Session struct {
-	ID          string
-	UserID      string
-	Port        int
-	server      *http.Server
-	mutex       sync.Mutex
-	isActive    bool
-	ctx         context.Context
-	cancel      context.CancelFunc
-	allocCtx    context.Context
-	allocCancel context.CancelFunc
-	IsLoggedIn  bool
-	loginChan   chan bool
-	CreatedAt   time.Time
-	credential  *util.SteamCredential
-	debugPort   int
-	profileDir  string
-	chromeCmd   *exec.Cmd
+	ID     string
+	UserID string
+	Port   int
+	// server      *http.Server // Removed: no HTTP server needed
+	mutex         sync.Mutex
+	isActive      bool
+	ctx           context.Context
+	cancel        context.CancelFunc
+	allocCtx      context.Context
+	allocCancel   context.CancelFunc
+	IsLoggedIn    bool
+	loginChan     chan bool
+	CreatedAt     time.Time
+	credential    *util.SteamCredential
+	debugPort     int
+	profileDir    string
+	chromeCmd     *exec.Cmd
+	ProfileURL    string          // URL to open in new tab after login
+	profileTabCtx context.Context // Store profile tab context for refresh
+}
+
+// InteractWithProfilePage performs the automated clicks on the profile page
+func (s *Session) InteractWithProfilePage() {
+
+	// First click
+	err := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[1]/div[7]/div[6]/div[1]/div[2]/div/div/div/div[4]/div[2]/span/span`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[1]/div[7]/div[6]/div[1]/div[2]/div/div/div/div[4]/div[2]/span/span`, chromedp.BySearch),
+	)
+	if err != nil {
+		log.Printf("[Session %s] Failed to click first element: %v", s.ID, err)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
+	// Second click (restored XPath)
+	err2 := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[1]/div[7]/div[6]/div[1]/div[2]/div/div/div/div[4]/div[2]/div/div[9]/a[4]`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[1]/div[7]/div[6]/div[1]/div[2]/div/div/div/div[4]/div[2]/div/div[9]/a[4]`, chromedp.BySearch),
+	)
+	if err2 != nil {
+		log.Printf("[Session %s] Failed to click second element (div[9]/a[4] XPath): %v", s.ID, err2)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
+	time.Sleep(1 * time.Second)
+	// Third click (new XPath)
+	err3 := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[6]`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[6]`, chromedp.BySearch),
+	)
+	if err3 != nil {
+		log.Printf("[Session %s] Failed to click third element (div[6] XPath): %v", s.ID, err3)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
+	// Fourth click (new XPath)
+	err4 := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[1]`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[1]`, chromedp.BySearch),
+	)
+	if err4 != nil {
+		log.Printf("[Session %s] Failed to click fourth element (div[1] XPath): %v", s.ID, err4)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
+	// Fill out the textarea with a report reason
+	reportReasons := []string{"cheating in cs2", "cheating in Counter-Strike 2", "using cheats in cs2", "suspected cheating in cs2"}
+	for _, reason := range reportReasons {
+		err := chromedp.Run(s.profileTabCtx,
+			chromedp.WaitVisible(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/textarea`, chromedp.BySearch),
+			chromedp.SetValue(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/textarea`, reason, chromedp.BySearch),
+		)
+		if err != nil {
+			log.Printf("[Session %s] Failed to fill textarea with '%s': %v", s.ID, reason, err)
+		} else {
+			time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+			break // Stop after first successful fill
+		}
+	}
+
+	// Click the next element after filling textarea
+	err5 := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/div[1]/div[1]/div/div[1]`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/div[1]/div[1]/div/div[1]`, chromedp.BySearch),
+	)
+	if err5 != nil {
+		log.Printf("[Session %s] Failed to click element after textarea: %v", s.ID, err5)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
+	// Click the final button
+	err6 := chromedp.Run(s.profileTabCtx,
+		chromedp.WaitVisible(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/button`, chromedp.BySearch),
+		chromedp.Click(`/html/body/div[4]/div[3]/div/div/div/div[2]/div[2]/div[2]/button`, chromedp.BySearch),
+	)
+	if err6 != nil {
+		log.Printf("[Session %s] Failed to click final button: %v", s.ID, err6)
+	}
+	time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
+
 }
 
 // NewSession creates a new bot session with ChromeDP
@@ -68,6 +176,63 @@ func NewSessionWithCredentials(id, userID string, port, debugPort int, cred *uti
 	}
 }
 
+// isSteam64 checks if a string is a Steam64 ID (17 digits, all numeric)
+func isSteam64(id string) bool {
+	if len(id) != 17 {
+		return false
+	}
+	for _, c := range id {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// detectLoggedInState checks if we're actually logged in by looking for Steam UI elements
+func (s *Session) detectLoggedInState() bool {
+	// Check for the account name button by XPath and ensure it contains text
+	var accountName string
+	err := chromedp.Run(s.ctx,
+		chromedp.Text(`/html/body/div[1]/div[7]/div[1]/div/div[3]/div/button`, &accountName, chromedp.BySearch, chromedp.NodeVisible),
+	)
+	if err == nil && strings.TrimSpace(accountName) != "" {
+		return true
+	}
+
+	currentURL := s.GetCurrentURL()
+	if strings.Contains(currentURL, "steamcommunity.com") ||
+		(strings.Contains(currentURL, "store.steampowered.com") && !strings.Contains(currentURL, "/login")) {
+		return true
+	}
+
+	return false
+}
+
+// performAutoLogin attempts to automatically log in using stored credentials
+// performQRLogin is a stub for QR login automation. Implement as needed.
+func (s *Session) performQRLogin() error {
+	return fmt.Errorf("performQRLogin not implemented")
+}
+
+// performPasswordLogin is a stub for password login automation. Implement as needed.
+func (s *Session) performPasswordLogin() error {
+	return fmt.Errorf("performPasswordLogin not implemented")
+}
+func (s *Session) performAutoLogin() error {
+	if s.credential == nil {
+		return fmt.Errorf("no credentials provided")
+	}
+
+	// Handle QR code login differently
+	if s.credential.LoginMethod == util.LoginMethodQR {
+		return s.performQRLogin()
+	}
+
+	// Standard username/password login
+	return s.performPasswordLogin()
+}
+
 // Start begins listening on the session's port and launches browser
 func (s *Session) Start() error {
 	s.mutex.Lock()
@@ -83,66 +248,48 @@ func (s *Session) Start() error {
 		return fmt.Errorf("failed to initialize browser: %w", err)
 	}
 
-	// Navigate to Steam login page
-	if err := s.navigateToSteamLogin(); err != nil {
-		s.mutex.Unlock()
-		return fmt.Errorf("failed to navigate to Steam login: %w", err)
-	}
-
-	s.mutex.Unlock()
-
-	// If credentials are provided, attempt auto-login
-	if s.credential != nil {
-		log.Printf("[Session %s] Auto-logging in with account: %s", s.ID, s.credential.AccountName)
-		if err := s.performAutoLogin(); err != nil {
-			log.Printf("[Session %s] Auto-login failed: %v, waiting for manual login", s.ID, err)
-			log.Printf("[Session %s] Please log in manually in the browser window.", s.ID)
+	// Wait for ChromeDP connection to be ready
+	for i := 0; i < 20; i++ {
+		time.Sleep(500 * time.Millisecond)
+		if err := chromedp.Run(s.ctx, chromedp.Tasks{}); err == nil {
+			break
 		}
+		if i == 19 {
+			s.mutex.Unlock()
+			return fmt.Errorf("could not connect to ChromeDP after retries")
+		}
+	}
+
+	// Navigate the same tab to the user-specified profile URL
+	profileTabURL := s.ProfileURL
+	if profileTabURL == "" {
+		profileTabURL = "https://steamcommunity.com/"
+	}
+	s.profileTabCtx = s.ctx
+	if err := chromedp.Run(s.profileTabCtx, chromedp.Navigate(profileTabURL)); err != nil {
+		log.Printf("[Session %s] Failed to navigate to profile: %v", s.ID, err)
+	}
+
+	// After login, refresh the profile tab to transfer session
+	if err := chromedp.Run(s.profileTabCtx, chromedp.Reload()); err != nil {
+		log.Printf("[Session %s] Failed to refresh profile tab: %v", s.ID, err)
 	} else {
-		log.Printf("[Session %s] Browser opened at Steam login. Waiting for login to complete...", s.ID)
-		log.Printf("[Session %s] Please log in manually in the browser window.", s.ID)
+		// Call the new profile interaction function
+		s.InteractWithProfilePage()
 	}
 
-	// Start monitoring for login completion
-	go s.monitorLogin()
-
-	// Block until login is complete
-	<-s.loginChan
-
-	s.mutex.Lock()
-	s.IsLoggedIn = true
-	s.mutex.Unlock()
-
-	log.Printf("[Session %s] ✓ Login detected! Starting API server...", s.ID)
-
-	// Now start the HTTP server for automation
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", s.handleHealth)
-	mux.HandleFunc("/action/open-profile", s.handleOpenProfile)
-	mux.HandleFunc("/action/navigate", s.handleNavigate)
-	mux.HandleFunc("/action/get-screenshot", s.handleGetScreenshot)
-	mux.HandleFunc("/status", s.handleStatus)
-
-	s.server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.Port),
-		Handler: mux,
-	}
-
+	// No HTTP server: just return after login
 	s.mutex.Lock()
 	s.isActive = true
 	s.mutex.Unlock()
-
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("[Session %s] Server error: %v", s.ID, err)
-		}
-	}()
-
 	return nil
 }
 
 // initBrowser launches Chrome with remote debugging and connects ChromeDP
 func (s *Session) initBrowser() error {
+	// ...existing code...
+	// ...existing code...
+
 	chromePath := "/usr/bin/google-chrome"
 	s.profileDir = filepath.Join(".", "chrome-profiles", fmt.Sprintf("profile-%s", s.ID))
 
@@ -155,37 +302,32 @@ func (s *Session) initBrowser() error {
 	os.Remove(filepath.Join(s.profileDir, "SingletonLock"))
 	os.Remove(filepath.Join(s.profileDir, "SingletonSocket"))
 
-	// Launch Chrome with remote debugging
-	args := []string{
-		fmt.Sprintf("--user-data-dir=%s", s.profileDir),
-		fmt.Sprintf("--remote-debugging-port=%d", s.debugPort),
-		"--remote-debugging-address=127.0.0.1",
-		"--no-first-run",
-		"--no-default-browser-check",
-		"--disable-blink-features=AutomationControlled",
-		"--window-size=1024,768",
-		"about:blank",
-	}
-
-	s.chromeCmd = exec.Command(chromePath, args...)
-	if err := s.chromeCmd.Start(); err != nil {
-		return fmt.Errorf("failed to launch Chrome: %w", err)
-	}
-
-	log.Printf("[Session %s] Chrome launched on debug port %d (PID: %d)", s.ID, s.debugPort, s.chromeCmd.Process.Pid)
-
-	// Wait for Chrome to start
-	time.Sleep(2 * time.Second)
-
-	// Connect ChromeDP to the running Chrome instance
-	s.allocCtx, s.allocCancel = chromedp.NewRemoteAllocator(context.Background(),
-		fmt.Sprintf("http://127.0.0.1:%d", s.debugPort))
-
+	// Launch Chrome with chromedp's ExecAllocator
+	loginURL := "https://store.steampowered.com/login/"
+	ops := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath(chromePath),
+		chromedp.UserDataDir(s.profileDir),
+		chromedp.Flag("no-first-run", true),
+		chromedp.Flag("no-default-browser-check", true),
+		chromedp.Flag("disable-blink-features", "AutomationControlled"),
+		chromedp.Flag("window-size", "1024,768"),
+		chromedp.Flag("headless", false),
+	)
+	s.allocCtx, s.allocCancel = chromedp.NewExecAllocator(context.Background(), ops...)
 	s.ctx, s.cancel = chromedp.NewContext(s.allocCtx)
 
-	// Test connection
-	if err := chromedp.Run(s.ctx); err != nil {
-		return fmt.Errorf("failed to connect to Chrome: %w", err)
+	// Wait for browser to be ready
+	for i := 0; i < 10; i++ {
+		err := chromedp.Run(s.ctx, chromedp.Tasks{})
+		if err == nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	// Open login page in the first tab
+	if err := chromedp.Run(s.ctx, chromedp.Navigate(loginURL)); err != nil {
+		return fmt.Errorf("failed to open login tab: %w", err)
 	}
 
 	return nil
@@ -215,9 +357,6 @@ func (s *Session) Stop() error {
 		s.chromeCmd.Process.Kill()
 	}
 
-	if s.server != nil {
-		return s.server.Close()
-	}
 	return nil
 }
 
@@ -295,201 +434,25 @@ func (s *Session) WaitForSelector(selector string, timeoutMs int) error {
 	)
 }
 
-// monitorLogin continuously checks if the user has successfully logged into Steam
+// monitorLogin waits for login, then navigates to bot profile and opens user-inputted profile in new tab
 func (s *Session) monitorLogin() {
 	for {
 		var currentURL string
-		err := chromedp.Run(s.ctx,
-			chromedp.Location(&currentURL),
-		)
-
+		err := chromedp.Run(s.ctx, chromedp.Location(&currentURL))
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-
-		// Check if we've successfully navigated away from login page
 		if currentURL != "" &&
-			!contains(currentURL, "store.steampowered.com/login") &&
-			!contains(currentURL, "login.steampowered.com") &&
-			!contains(currentURL, "help.steampowered.com/wizard/Login") {
-
-			// Additional check: look for Steam-specific logged-in elements
+			!strings.Contains(currentURL, "store.steampowered.com/login") &&
+			!strings.Contains(currentURL, "login.steampowered.com") &&
+			!strings.Contains(currentURL, "help.steampowered.com/wizard/Login") {
 			if s.detectLoggedInState() {
-				log.Printf("[Session %s] Login successful! Redirected to: %s", s.ID, currentURL)
+				log.Printf("[Session %s] Login successful! Staying on: %s", s.ID, currentURL)
 				s.loginChan <- true
-				return
+				break
 			}
 		}
 
-		time.Sleep(500 * time.Millisecond)
 	}
-}
-
-// detectLoggedInState checks if we're actually logged in by looking for Steam UI elements
-func (s *Session) detectLoggedInState() bool {
-	var exists bool
-	err := chromedp.Run(s.ctx,
-		chromedp.Evaluate(`!!document.querySelector('#account_pulldown, .account_menu, [class*="accountmenu"]')`, &exists),
-	)
-	if err == nil && exists {
-		return true
-	}
-
-	currentURL := s.GetCurrentURL()
-	if contains(currentURL, "steamcommunity.com") ||
-		(contains(currentURL, "store.steampowered.com") && !contains(currentURL, "/login")) {
-		return true
-	}
-
-	return false
-}
-
-// performAutoLogin attempts to automatically log in using stored credentials
-func (s *Session) performAutoLogin() error {
-	if s.credential == nil {
-		return fmt.Errorf("no credentials provided")
-	}
-
-	// Handle QR code login differently
-	if s.credential.LoginMethod == util.LoginMethodQR {
-		return s.performQRLogin()
-	}
-
-	// Standard username/password login
-	return s.performPasswordLogin()
-}
-
-// performPasswordLogin handles username + password authentication
-func (s *Session) performPasswordLogin() error {
-	// Wait for login form to load
-	time.Sleep(2 * time.Second)
-
-	return chromedp.Run(s.ctx,
-		// Fill in username using provided XPath
-		chromedp.WaitVisible(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[1]/input`, chromedp.BySearch),
-		chromedp.SendKeys(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[1]/input`, s.credential.AccountName, chromedp.BySearch),
-		chromedp.Sleep(300*time.Millisecond),
-
-		// Fill in password (keep generic selector)
-		chromedp.WaitVisible(`input[type='password'], input[name='password']`, chromedp.ByQuery),
-		chromedp.SendKeys(`input[type='password'], input[name='password']`, s.credential.Password, chromedp.ByQuery),
-		chromedp.Sleep(300*time.Millisecond),
-
-		// Click sign in button using provided XPath
-		chromedp.Click(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[4]/button`, chromedp.BySearch),
-	)
-}
-
-// performQRLogin handles QR code based authentication
-func (s *Session) performQRLogin() error {
-	log.Printf("[Session %s] QR code login - waiting for user to scan QR code...", s.ID)
-	log.Printf("[Session %s] Please scan the QR code with your Steam Mobile app", s.ID)
-	// QR login is handled by user scanning the code
-	return nil
-}
-
-// HTTP Handler functions
-
-func (s *Session) handleHealth(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":    "ok",
-		"sessionId": s.ID,
-		"userId":    s.UserID,
-		"port":      s.Port,
-	})
-}
-
-func (s *Session) handleStatus(w http.ResponseWriter, r *http.Request) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"sessionId":  s.ID,
-		"userId":     s.UserID,
-		"port":       s.Port,
-		"active":     s.isActive,
-		"isLoggedIn": s.IsLoggedIn,
-		"currentUrl": s.GetCurrentURL(),
-		"createdAt":  s.CreatedAt,
-	})
-}
-
-func (s *Session) handleOpenProfile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if !s.IsLoggedIn {
-		http.Error(w, "Session not logged in yet", http.StatusPreconditionFailed)
-		return
-	}
-
-	log.Printf("[Session %s] Executing action: open-profile for user %s", s.ID, s.UserID)
-
-	url := fmt.Sprintf("https://steamcommunity.com/id/%s", s.UserID)
-	err := s.NavigateTo(url)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"action":  "open-profile",
-		"userId":  s.UserID,
-		"message": fmt.Sprintf("Opened profile for %s", s.UserID),
-	})
-}
-
-func (s *Session) handleNavigate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var payload struct {
-		URL string `json:"url"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	if payload.URL == "" {
-		http.Error(w, "URL is required", http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("[Session %s] Executing action: navigate to %s", s.ID, payload.URL)
-
-	err := s.NavigateTo(payload.URL)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "success",
-		"action":  "navigate",
-		"url":     payload.URL,
-		"message": fmt.Sprintf("Navigated to %s", payload.URL),
-	})
-}
-
-func (s *Session) handleGetScreenshot(w http.ResponseWriter, r *http.Request) {
-	screenshot, err := s.GetScreenshot()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Screenshot failed: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "image/png")
-	w.Write(screenshot)
-}
-
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
 }

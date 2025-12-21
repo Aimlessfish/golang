@@ -33,3 +33,9 @@ steam_credentials.json
 
 # Chrome browser profiles and data
 chrome-profiles/
+
+*.pngg
+*.jpg
+*.jpeg
+*.gif
+*.bmp
