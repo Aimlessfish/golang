@@ -10,6 +10,7 @@ import (
 	clear "discordBot/functions/clearbotmsg"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	"discordBot/functions/steam"
 	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
@@ -17,7 +18,19 @@ import (
 
 func ConnectAPI(logger *slog.Logger) error {
 	logger = logger.With("Bot", "ConnectAPI")
+
+	// Load environment variables
+	if err := util.LoadEnv(); err != nil {
+		logger.Warn("No .env file found, using defaults")
+	}
+
 	api_key := util.GetToken()
+
+	// Initialize Steam session manager with port from env
+	startPort := util.GetEnvAsInt("SESSION_START_PORT", 8080)
+	steam.InitSteamManager(startPort)
+
+	logger.Info("Steam manager initialized", "start_port", startPort)
 
 	discord, err := discordgo.New("Bot " + api_key)
 	if err != nil {
@@ -34,6 +47,11 @@ func ConnectAPI(logger *slog.Logger) error {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-stop
 
+	// Cleanup Steam sessions on shutdown
+	if manager := steam.GetManager(); manager != nil {
+		manager.StopAll()
+	}
+
 	return nil
 }
 
@@ -42,6 +60,11 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 	channelID := message.ChannelID
 
 	if message.Author.ID == server.State.User.ID {
+		return
+	}
+
+	// Check for Steam commands first (they handle their own loading messages)
+	if steam.HandleSteamCommands(server, message) {
 		return
 	}
 

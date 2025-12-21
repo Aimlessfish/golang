@@ -3,6 +3,7 @@ package util
 import (
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -13,18 +14,62 @@ func GetToken() string {
 	logger := LoggerInit("GET BOT", "BOT")
 	logger.Info("Getting bot token")
 
-	err := godotenv.Load()
+	// Try to load .env from csrep directory first, then root directory
+	err := godotenv.Load("csrep/.env")
 	if err != nil {
-		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
-		return "broke mate"
-	} else {
-		token := os.Getenv("TOKEN")
-		if len(token) == 0 {
-			panic("Token length == 0!")
-		} else {
-			return token
+		// Fall back to root .env
+		err = godotenv.Load()
+		if err != nil {
+			logger.Info("No .env file found", "ERROR", err.Error())
 		}
 	}
+
+	// Try DISCORD_BOT_TOKEN first (csrep format), then TOKEN (legacy format)
+	token := os.Getenv("DISCORD_BOT_TOKEN")
+	if len(token) == 0 {
+		token = os.Getenv("TOKEN")
+	}
+
+	if len(token) == 0 {
+		panic("Token not found! Please set DISCORD_BOT_TOKEN or TOKEN in .env file")
+	}
+
+	return token
+}
+
+func GetEnvAsInt(key string, defaultVal int) int {
+	if value := os.Getenv(key); value != "" {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
+	}
+	return defaultVal
+}
+
+func GetEnvAsBool(key string, defaultVal bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolVal, err := strconv.ParseBool(value); err == nil {
+			return boolVal
+		}
+	}
+	return defaultVal
+}
+
+func LoadEnv() error {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	// Try csrep/.env first
+	csrepEnv := filepath.Join(cwd, "csrep", ".env")
+	if err := godotenv.Load(csrepEnv); err == nil {
+		return nil
+	}
+
+	// Fall back to root .env
+	return godotenv.Load()
 }
 
 func LoggerInit(logID, descriptor string) *slog.Logger {

@@ -1,0 +1,35 @@
+# Binaries
+csrep
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Environment files
+.env
+
+# Credential storage
+steam_credentials.json
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Playwright browser cache
+.cache/
+ms-playwright/
+
+# Logs
+*.log
