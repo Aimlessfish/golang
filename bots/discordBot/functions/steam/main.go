@@ -48,7 +48,7 @@ func HandleSteamCommands(s *discordgo.Session, m *discordgo.MessageCreate) bool 
 
 	if channel.Type != discordgo.ChannelTypeDM {
 		if strings.HasPrefix(m.Content, "!steam") {
-			s.ChannelMessageSend(m.ChannelID, "⚠️ Please DM me directly to use bot commands for privacy and security.")
+			s.ChannelMessageSend(m.ChannelID, "Please DM me directly to use bot commands for privacy and security.")
 		}
 		return false
 	}
@@ -100,13 +100,13 @@ func cleanupMessages(s *discordgo.Session, channelID string, keepCount int) {
 
 func handleBotAdd(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if manager == nil {
-		s.ChannelMessageSend(m.ChannelID, "❌ Steam manager not initialized")
+		s.ChannelMessageSend(m.ChannelID, "Steam manager not initialized")
 		return
 	}
 
 	parts := strings.Fields(m.Content)
 	if len(parts) < 5 {
-		s.ChannelMessageSend(m.ChannelID, "❌ Usage: `!steam bot-add <email> <username> <password> [shared_secret]`")
+		s.ChannelMessageSend(m.ChannelID, "Usage: `!steam bot-add <email> <username> <password> [shared_secret]`")
 		return
 	}
 
@@ -131,19 +131,19 @@ func handleBotAdd(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Add to credential store
 	err := manager.AddCredential(cred)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("❌ Error adding bot account: %v", err))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error adding bot account: %v", err))
 		return
 	}
 
 	// Delete the original message for security
 	s.ChannelMessageDelete(m.ChannelID, m.ID)
 
-	response := fmt.Sprintf("✅ Bot account added: **%s**\n", username)
-	response += fmt.Sprintf("📧 Email: %s\n", email)
+	response := fmt.Sprintf("Bot account added: **%s**\n", username)
+	response += fmt.Sprintf("Email: %s\n", email)
 	if sharedSecret != "" {
-		response += "🔐 2FA: Enabled\n"
+		response += "2FA: Enabled\n"
 	} else {
-		response += "🔐 2FA: Disabled\n"
+		response += "2FA: Disabled\n"
 	}
 	response += "\n_Original message deleted for security_"
 
@@ -153,7 +153,7 @@ func handleBotAdd(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func handleBotList(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if manager == nil {
-		s.ChannelMessageSend(m.ChannelID, "❌ Steam manager not initialized")
+		s.ChannelMessageSend(m.ChannelID, "Steam manager not initialized")
 		return
 	}
 
@@ -163,7 +163,7 @@ func handleBotList(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	response := "**🤖 Available Bot Accounts:**\n```\n"
+	response := "**Available Bot Accounts:**\n```\n"
 	for i, acc := range accounts {
 		response += fmt.Sprintf("%d. %s\n", i+1, acc)
 	}
@@ -175,43 +175,43 @@ func handleBotList(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func handleBotRemove(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if manager == nil {
-		s.ChannelMessageSend(m.ChannelID, "❌ Steam manager not initialized")
+		s.ChannelMessageSend(m.ChannelID, "Steam manager not initialized")
 		return
 	}
 
 	parts := strings.Fields(m.Content)
 	if len(parts) < 3 {
-		s.ChannelMessageSend(m.ChannelID, "❌ Usage: `!steam bot-remove <username>`")
+		s.ChannelMessageSend(m.ChannelID, "Usage: `!steam bot-remove <username>`")
 		return
 	}
 
 	username := parts[2]
 	err := manager.RemoveCredential(username)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("❌ Error: %v", err))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Error: %v", err))
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("✅ Bot account removed: **%s**", username))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Bot account removed: **%s**", username))
 	go cleanupMessages(s, m.ChannelID, 5)
 }
 
 func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if manager == nil {
-		s.ChannelMessageSend(m.ChannelID, "❌ Steam manager not initialized")
+		s.ChannelMessageSend(m.ChannelID, "Steam manager not initialized")
 		return
 	}
 
 	parts := strings.Fields(m.Content)
-	
+
 	// Determine if using !report or !steam report format
 	urlIndex := 1
 	if strings.HasPrefix(strings.ToLower(m.Content), "!steam report") {
 		urlIndex = 2
 	}
-	
+
 	if len(parts) < urlIndex+1 {
-		s.ChannelMessageSend(m.ChannelID, "❌ Usage: `!report <steam_profile_url> [number_of_bots]`\nExample: `!report https://steamcommunity.com/profiles/123456 5`")
+		s.ChannelMessageSend(m.ChannelID, "Usage: `!report <steam_profile_url> [number_of_bots]`\nExample: `!report https://steamcommunity.com/profiles/123456 5`")
 		return
 	}
 
@@ -226,18 +226,18 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	steamID, err := extractSteamID(profileURL)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("❌ Invalid Steam profile URL: %v", err))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Invalid Steam profile URL: %v", err))
 		return
 	}
 
 	// Check if we have enough bot accounts
 	availableBots := manager.ListCredentials()
 	if len(availableBots) < numBots {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("❌ Not enough bot accounts. Requested: %d, Available: %d\nUse `!steam bot-add` to add more accounts", numBots, len(availableBots)))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Not enough bot accounts. Requested: %d, Available: %d\nUse `!steam bot-add` to add more accounts", numBots, len(availableBots)))
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("✅ Valid Steam profile detected\n🎯 Target Steam ID: `%s`\n🤖 Deploying **%d** bot(s)...", steamID, numBots))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Valid Steam profile detected\nTarget Steam ID: `%s`\nDeploying **%d** bot(s)...", steamID, numBots))
 
 	reportURL := fmt.Sprintf("https://help.steampowered.com/en/wizard/HelpWithGameIssue/?appid=730&issueid=1010&playerid=%s", steamID)
 
@@ -267,13 +267,13 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	time.Sleep(2 * time.Second) // Give sessions time to start
 
-	summary := fmt.Sprintf("\n**📊 Report Summary:**\n✅ Deploying: %d/%d bots\n", numBots, numBots)
+	summary := fmt.Sprintf("\n**Report Summary:**\nDeploying: %d/%d bots\n", numBots, numBots)
 	summary += "\n**Active Bots:**\n"
 	for _, bot := range successList {
 		summary += bot + "\n"
 	}
-	summary += fmt.Sprintf("\n🔗 Report URL: `%s`\n", reportURL)
-	summary += "⏳ Sessions starting - bots will login and navigate to report page\n\n_Automation in progress_"
+	summary += fmt.Sprintf("\nReport URL: `%s`\n", reportURL)
+	summary += "Sessions starting - bots will login and navigate to report page\n\n_Automation in progress_"
 
 	s.ChannelMessageSend(m.ChannelID, summary)
 
@@ -295,7 +295,7 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	reports[reportID] = report
 	reportsMutex.Unlock()
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\n📋 Report tracked as: `%s`", reportID))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\nReport tracked as: `%s`", reportID))
 	go cleanupMessages(s, m.ChannelID, 10)
 }
 
@@ -331,19 +331,19 @@ func handleReports(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	response := "**📋 Active Report Processes:**\n\n"
+	response := "**Active Report Processes:**\n\n"
 
 	for _, report := range reports {
 		elapsed := time.Since(report.StartTime).Round(time.Second)
 		response += fmt.Sprintf("**%s**\n", report.ReportID)
-		response += fmt.Sprintf("🎯 Target: `%s`\n", report.TargetID)
-		response += fmt.Sprintf("🔗 URL: %s\n", report.ProfileURL)
-		response += fmt.Sprintf("🤖 Bots: %d active\n", len(report.BotNames))
-		response += fmt.Sprintf("⏱️ Running: %s\n", elapsed)
-		response += fmt.Sprintf("🟢 Status: %s\n", report.Status)
+		response += fmt.Sprintf("Target: `%s`\n", report.TargetID)
+		response += fmt.Sprintf("URL: %s\n", report.ProfileURL)
+		response += fmt.Sprintf("Bots: %d active\n", len(report.BotNames))
+		response += fmt.Sprintf("Running: %s\n", elapsed)
+		response += fmt.Sprintf("Status: %s\n", report.Status)
 		response += "```\n"
 		for i, botName := range report.BotNames {
-			response += fmt.Sprintf("%d. %s → %s\n", i+1, botName, report.SessionIDs[i])
+			response += fmt.Sprintf("%d. %s -> %s\n", i+1, botName, report.SessionIDs[i])
 		}
 		response += "```\n\n"
 	}
@@ -353,7 +353,7 @@ func handleReports(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func handleSteamHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
-	help := `**🤖 Steam Report Bot Commands**
+	help := `**Steam Report Bot Commands**
 
 **Bot Management:**
 ` + "`!steam bot-add <email> <username> <password> [shared_secret]`" + ` - Add bot account
