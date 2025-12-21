@@ -215,7 +215,7 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	profileURL := parts[urlIndex]
+	target := parts[urlIndex]
 	numBots := 1
 	if len(parts) >= urlIndex+2 {
 		fmt.Sscanf(parts[urlIndex+1], "%d", &numBots)
@@ -224,10 +224,17 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	steamID, err := extractSteamID(profileURL)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Invalid Steam profile URL: %v", err))
-		return
+	var steamID string
+	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
+		var err error
+		steamID, err = extractSteamID(target)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Invalid Steam profile URL: %v", err))
+			return
+		}
+	} else {
+		// Assume direct SteamID input
+		steamID = target
 	}
 
 	// Check if we have enough bot accounts
@@ -285,7 +292,7 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 	report := &ReportProcess{
 		ReportID:   reportID,
 		TargetID:   steamID,
-		ProfileURL: profileURL,
+		ProfileURL: target,
 		SessionIDs: sessionIDs,
 		BotNames:   botNames,
 		StartTime:  time.Now(),

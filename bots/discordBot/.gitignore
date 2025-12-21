@@ -30,3 +30,6 @@ Thumbs.db
 
 # Credentials and sensitive files
 steam_credentials.json
+
+# Chrome browser profiles and data
+chrome-profiles/

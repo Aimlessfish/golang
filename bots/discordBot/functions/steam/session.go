@@ -332,7 +332,6 @@ func (s *Session) detectLoggedInState() bool {
 	err := chromedp.Run(s.ctx,
 		chromedp.Evaluate(`!!document.querySelector('#account_pulldown, .account_menu, [class*="accountmenu"]')`, &exists),
 	)
-
 	if err == nil && exists {
 		return true
 	}
@@ -367,18 +366,18 @@ func (s *Session) performPasswordLogin() error {
 	time.Sleep(2 * time.Second)
 
 	return chromedp.Run(s.ctx,
-		// Fill in username
-		chromedp.WaitVisible(`input[type='text'], input[name='username']`, chromedp.ByQuery),
-		chromedp.SendKeys(`input[type='text'], input[name='username']`, s.credential.AccountName, chromedp.ByQuery),
+		// Fill in username using provided XPath
+		chromedp.WaitVisible(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[1]/input`, chromedp.BySearch),
+		chromedp.SendKeys(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[1]/input`, s.credential.AccountName, chromedp.BySearch),
 		chromedp.Sleep(300*time.Millisecond),
 
-		// Fill in password
+		// Fill in password (keep generic selector)
 		chromedp.WaitVisible(`input[type='password'], input[name='password']`, chromedp.ByQuery),
 		chromedp.SendKeys(`input[type='password'], input[name='password']`, s.credential.Password, chromedp.ByQuery),
 		chromedp.Sleep(300*time.Millisecond),
 
-		// Click sign in button
-		chromedp.Click(`button[type='submit'], button.login_btn`, chromedp.ByQuery),
+		// Click sign in button using provided XPath
+		chromedp.Click(`/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[4]/button`, chromedp.BySearch),
 	)
 }
 
