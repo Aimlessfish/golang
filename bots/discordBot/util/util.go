@@ -3,7 +3,6 @@ package util
 import (
 	"log/slog"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -14,17 +13,13 @@ func GetToken() string {
 	logger := LoggerInit("GET BOT", "BOT")
 	logger.Info("Getting bot token")
 
-	// Try to load .env from csrep directory first, then root directory
-	err := godotenv.Load("csrep/.env")
+	// Load .env from project root only
+	err := godotenv.Load()
 	if err != nil {
-		// Fall back to root .env
-		err = godotenv.Load()
-		if err != nil {
-			logger.Info("No .env file found", "ERROR", err.Error())
-		}
+		logger.Info("No .env file found", "ERROR", err.Error())
 	}
 
-	// Try DISCORD_BOT_TOKEN first (csrep format), then TOKEN (legacy format)
+	// Try DISCORD_BOT_TOKEN first, then TOKEN (legacy format)
 	token := os.Getenv("DISCORD_BOT_TOKEN")
 	if len(token) == 0 {
 		token = os.Getenv("TOKEN")
@@ -56,19 +51,8 @@ func GetEnvAsBool(key string, defaultVal bool) bool {
 }
 
 func LoadEnv() error {
-	// Get the current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
 
-	// Try csrep/.env first
-	csrepEnv := filepath.Join(cwd, "csrep", ".env")
-	if err := godotenv.Load(csrepEnv); err == nil {
-		return nil
-	}
-
-	// Fall back to root .env
+	// Load .env from project root only
 	return godotenv.Load()
 }
 
