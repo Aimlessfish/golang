@@ -120,7 +120,8 @@ func (s *Session) InteractWithProfilePage() {
 			log.Printf("[Session %s] Failed to fill textarea with '%s': %v", s.ID, reason, err)
 		} else {
 			time.Sleep(time.Duration(rand.Intn(2000)+1000) * time.Millisecond)
-			break // Stop after first successful fill
+			   // Stop after first successful fill
+			   return
 		}
 	}
 
@@ -217,7 +218,88 @@ func (s *Session) performQRLogin() error {
 
 // performPasswordLogin is a stub for password login automation. Implement as needed.
 func (s *Session) performPasswordLogin() error {
-	return fmt.Errorf("performPasswordLogin not implemented")
+	if s.credential == nil {
+		return fmt.Errorf("no credentials provided for password login")
+	}
+	log.Printf("[Session %s] Attempting password login for account: %s", s.ID, s.credential.AccountName)
+
+	ctx := s.ctx
+	if ctx == nil {
+		return fmt.Errorf("chromedp context is nil in performPasswordLogin")
+	}
+
+	// Use provided absolute XPaths for reliability
+	usernameXPath := `/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[1]/input`
+	passwordXPath := `/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[2]/input`
+	submitXPath := `/html/body/div[1]/div[7]/div[7]/div[3]/div[1]/div/div/div/div[2]/div/form/div[4]/button`
+
+	// Wait for fields to be visible
+	err := chromedp.Run(ctx,
+		chromedp.WaitVisible(usernameXPath, chromedp.BySearch),
+		chromedp.WaitVisible(passwordXPath, chromedp.BySearch),
+	)
+	if err != nil {
+		log.Printf("[Session %s] Login form fields not visible: %v", s.ID, err)
+		return err
+	}
+
+	       // Focus and fill username and password, with delays
+		       // Human-like delays
+		       randDelay := func(minMs, maxMs int) { time.Sleep(time.Duration(rand.Intn(maxMs-minMs)+minMs) * time.Millisecond) }
+
+		       err = chromedp.Run(ctx,
+			       chromedp.Focus(usernameXPath, chromedp.BySearch),
+		       )
+		       randDelay(400, 900)
+		       err = chromedp.Run(ctx,
+			       chromedp.SetValue(usernameXPath, s.credential.AccountName, chromedp.BySearch),
+		       )
+		       if err != nil {
+			       log.Printf("[Session %s] Failed to set username: %v", s.ID, err)
+			       return err
+		       }
+		       randDelay(500, 1200)
+
+		       err = chromedp.Run(ctx,
+			       chromedp.Focus(passwordXPath, chromedp.BySearch),
+		       )
+		       randDelay(400, 900)
+		       err = chromedp.Run(ctx,
+			       chromedp.SetValue(passwordXPath, s.credential.Password, chromedp.BySearch),
+		       )
+		       if err != nil {
+			       log.Printf("[Session %s] Failed to set password: %v", s.ID, err)
+			       return err
+		       }
+		       randDelay(500, 1200)
+
+		       // Wait for form to be stable before submitting
+		       err = chromedp.Run(ctx,
+			       chromedp.WaitVisible(submitXPath, chromedp.BySearch),
+		       )
+		       if err != nil {
+			       log.Printf("[Session %s] Login button not visible: %v", s.ID, err)
+			       return err
+		       }
+		       randDelay(300, 700)
+
+		       // Re-set username field right before submit (if needed)
+		       err = chromedp.Run(ctx,
+			       chromedp.SetValue(usernameXPath, s.credential.AccountName, chromedp.BySearch),
+		       )
+		       randDelay(200, 500)
+
+		       // Click the login button
+		       err = chromedp.Run(ctx,
+			       chromedp.Click(submitXPath, chromedp.BySearch),
+		       )
+		       if err != nil {
+			       log.Printf("[Session %s] Failed to click login button: %v", s.ID, err)
+			       return err
+		       }
+
+	log.Printf("[Session %s] Login form submitted, waiting for login to complete...", s.ID)
+	return nil
 }
 func (s *Session) performAutoLogin() error {
 	if s.credential == nil {
@@ -260,7 +342,25 @@ func (s *Session) Start() error {
 		}
 	}
 
-	// Navigate the same tab to the user-specified profile URL
+	// Run login automation after navigating to login page
+	if err := s.performAutoLogin(); err != nil {
+		log.Printf("[Session %s] Login automation failed: %v", s.ID, err)
+		return err
+	}
+
+	// Wait for login to complete (detect logged-in state)
+	for i := 0; i < 15; i++ {
+		if s.detectLoggedInState() {
+			log.Printf("[Session %s] Login successful.", s.ID)
+			break
+		}
+		time.Sleep(1 * time.Second)
+		if i == 14 {
+			return fmt.Errorf("login did not complete after retries")
+		}
+	}
+
+	// Now navigate to the user-specified profile URL
 	profileTabURL := s.ProfileURL
 	if profileTabURL == "" {
 		profileTabURL = "https://steamcommunity.com/"
@@ -387,17 +487,6 @@ func (s *Session) NavigateTo(url string) error {
 	)
 }
 
-// GetScreenshot returns a PNG screenshot of the current page
-func (s *Session) GetScreenshot() ([]byte, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	var buf []byte
-	err := chromedp.Run(s.ctx,
-		chromedp.CaptureScreenshot(&buf),
-	)
-	return buf, err
-}
 
 // GetCurrentURL returns the current URL of the session
 func (s *Session) GetCurrentURL() string {

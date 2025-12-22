@@ -224,36 +224,30 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	var steamID string
-	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
-		var err error
-		steamID, err = extractSteamID(target)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Invalid Steam profile URL: %v", err))
-			return
-		}
-	} else {
-		// Assume direct SteamID input
-		steamID = target
-	}
+		       var steamID string
+		       var profileURL string
+		       if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
+			       profileURL = target
+			       var err error
+			       steamID, err = extractSteamID(target)
+			       if err != nil {
+				       s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Invalid Steam profile URL: %v", err))
+				       return
+			       }
+		       } else {
+			       // Assume direct SteamID input
+			       steamID = target
+			       profileURL = "https://steamcommunity.com/profiles/" + steamID
+		       }
 
-	// Check if we have enough bot accounts
-	availableBots := manager.ListCredentials()
-	if len(availableBots) < numBots {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Not enough bot accounts. Requested: %d, Available: %d\nUse `!steam bot-add` to add more accounts", numBots, len(availableBots)))
-		return
-	}
+		       // Check if we have enough bot accounts
+		       availableBots := manager.ListCredentials()
+		       if len(availableBots) < numBots {
+			       s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Not enough bot accounts. Requested: %d, Available: %d\nUse `!steam bot-add` to add more accounts", numBots, len(availableBots)))
+			       return
+		       }
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Valid Steam profile detected\nTarget Steam ID: `%s`\nDeploying **%d** bot(s)...", steamID, numBots))
-
-	var profileURL string
-	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
-		profileURL = target
-	} else if isSteam64(steamID) {
-		profileURL = "https://steamcommunity.com/profiles/" + steamID
-	} else {
-		profileURL = "https://steamcommunity.com/id/" + steamID
-	}
+			   s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Valid Steam profile detected\nTarget Steam ID: `%s`\nDeploying **%d** bot(s)...", steamID, numBots))
 
 	var sessionIDs []string
 	var botNames []string
@@ -309,9 +303,6 @@ func handleReport(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	reports[reportID] = report
 	reportsMutex.Unlock()
-
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("\nReport tracked as: `%s`", reportID))
-	// ...existing code...
 }
 
 // extractSteamID extracts the Steam ID from various Steam profile URL formats
@@ -364,7 +355,6 @@ func handleReports(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(m.ChannelID, response)
-	// ...existing code...
 }
 
 func handleSteamHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
