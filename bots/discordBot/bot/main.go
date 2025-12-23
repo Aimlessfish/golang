@@ -78,6 +78,8 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(channelID, "Failed to retrieve upcoming matches! ")
 		}
 	}
+	/***Steam Report Functions***/
+	// Main Report Message Handler
 	if strings.HasPrefix(message.Content, "!report") || strings.HasPrefix(message.Content, "report") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 2 {
@@ -96,6 +98,65 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			server.ChannelMessageSend(message.ChannelID, "Report started for: \n (uid: "+uid+")")
 			util.ExecReportBinary(uid, "1")
+		}
+	}
+	// Bot Addition Handler
+	if strings.HasPrefix(message.Content, "!bot-add") || strings.HasPrefix(message.Content, "bot-add") {
+		parts := util.SplitArgs(message.Content)
+		if len(parts) < 3 {
+			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-add <username> <password>")
+			return
+		}
+		username := parts[1]
+		password := parts[2]
+		if username == "" || password == "" {
+			server.ChannelMessageSend(message.ChannelID, "you did not provide a valid username or password")
+			return
+		}
+		command := "add"
+		args := []string{username, password}
+		output, err := util.ExecReportBinary(command, args...)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Failed to add bot account!")
+		} else {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+		}
+	}
+	// Bot Removal HAndler
+	if strings.HasPrefix(message.Content, "!bot-remove") || strings.HasPrefix(message.Content, "bot-remove") || strings.HasPrefix(message.Content, "!bot-del") || strings.HasPrefix(message.Content, "bot-del") {
+		parts := util.SplitArgs(message.Content)
+		if len(parts) < 2 {
+			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-remove <username>")
+			return
+		}
+		username := parts[1]
+		if username == "" {
+			server.ChannelMessageSend(message.ChannelID, "you did not provide a valid username")
+			return
+		}
+		command := "bot-remove"
+		args := []string{username}
+		output, err := util.ExecReportBinary(command, args...)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Failed to remove bot account!")
+		} else {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+		}
+	}
+	// List Handler
+	if strings.HasPrefix(message.Content, "!bot-list") || strings.HasPrefix(message.Content, "bot-list") {
+		parts := util.SplitArgs(message.Content)
+		if len(parts) < 1 {
+			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-list")
+			return
+		}
+		command := "bot-list"
+		args := []string{}
+		output, err := util.ExecReportBinary(command, args...)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Failed to list bot accounts!")
+		} else {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
 		}
 	}
 }

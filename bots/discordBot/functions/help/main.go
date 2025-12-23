@@ -14,11 +14,11 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "!proxy", Value: "Sends 1, tested; working, HTTP proxy."},
 			// --- Steam Bot Commands ---
 			{Name: "\u200B", Value: "**Steam Bot Commands:**", Inline: false},
-			{Name: "!steam bot-add <email> <username> <password> [shared_secret]", Value: "Add a Steam bot account for reporting."},
-			{Name: "!steam bot-list", Value: "List all added Steam bot accounts."},
-			{Name: "!steam bot-remove <username>", Value: "Remove a Steam bot account by username."},
-			{Name: "!report <steam_profile_url> [num_bots]", Value: "Report a player using the specified number of bots (default 1)."},
-			{Name: "!steam reports", Value: "View active report jobs."},
+			{Name: "!bot-add <email> <username> <password> [shared_secret]", Value: "Add a Steam bot account for reporting."},
+			{Name: "!bot-list", Value: "List all added Steam bot accounts."},
+			{Name: "!bot-remove <username>", Value: "Remove a Steam bot account by username."},
+			{Name: "!bot-del <username>", Value: "Remove a Steam bot account by username."},
+			{Name: "!report <url/steam64> [amount]", Value: "Report a player using the specified number of bots (default 1)."},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)

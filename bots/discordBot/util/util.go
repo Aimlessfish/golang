@@ -110,20 +110,26 @@ func SplitArgs(input string) []string {
 	}
 	return args
 }
-
-func ExecReportBinary(url, amount string) error {
+func ExecReportBinary(command string, args ...string) (string, error) {
 	logger := LoggerInit("UTIL", "ExecReportBinary")
-	logger.Info("Executing report binary", "url", url, "amount", amount)
-
 	cmd := "./reporter/csreport"
-	args := []string{url, amount}
-	println(args)
-	binaryCmd := exec.Command(cmd, args...)
+	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
 		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
-		return err
+		return string(output), err
 	}
-
-	return nil
+	return string(output), nil
 }
+
+// func ExecReportBinary(command string, args ...string) error {
+// 	logger := LoggerInit("UTIL", "ExecReportBinary")
+// 	cmd := "./reporter/csreport"
+// 	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
+// 	output, err := binaryCmd.CombinedOutput()
+// 	if err != nil {
+// 		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+// 		return err
+// 	}
+// 	return nil
+// }
