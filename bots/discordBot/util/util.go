@@ -121,15 +121,3 @@ func ExecReportBinary(command string, args ...string) (string, error) {
 	}
 	return string(output), nil
 }
-
-// func ExecReportBinary(command string, args ...string) error {
-// 	logger := LoggerInit("UTIL", "ExecReportBinary")
-// 	cmd := "./reporter/csreport"
-// 	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
-// 	output, err := binaryCmd.CombinedOutput()
-// 	if err != nil {
-// 		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
-// 		return err
-// 	}
-// 	return nil
-// }
