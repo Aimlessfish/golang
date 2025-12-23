@@ -3,6 +3,7 @@ package util
 import (
 	"log/slog"
 	"os"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -81,4 +82,47 @@ func MessageTTL(msgID string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// SplitArgs splits a command string into arguments, handling quoted strings.
+func SplitArgs(input string) []string {
+	var args []string
+	var current string
+	inQuotes := false
+	for i := 0; i < len(input); i++ {
+		c := input[i]
+		switch c {
+		case ' ':
+			if inQuotes {
+				current += string(c)
+			} else if len(current) > 0 {
+				args = append(args, current)
+				current = ""
+			}
+		case '"':
+			inQuotes = !inQuotes
+		default:
+			current += string(c)
+		}
+	}
+	if len(current) > 0 {
+		args = append(args, current)
+	}
+	return args
+}
+
+func ExecReportBinary(url, amount string) error {
+	logger := LoggerInit("UTIL", "ExecReportBinary")
+	logger.Info("Executing report binary", "url", url, "amount", amount)
+
+	cmd := "./reporter/csreport"
+	args := []string{"-url", url, "-amount", amount}
+	binaryCmd := exec.Command(cmd, args...)
+	output, err := binaryCmd.CombinedOutput()
+	if err != nil {
+		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+		return err
+	}
+
+	return nil
 }
