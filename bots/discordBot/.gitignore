@@ -27,6 +27,7 @@ Thumbs.db
 
 # Environment and secrets
 .env
+.json
 
 # Credentials and sensitive files
 steam_credentials.json

@@ -116,7 +116,8 @@ func ExecReportBinary(url, amount string) error {
 	logger.Info("Executing report binary", "url", url, "amount", amount)
 
 	cmd := "./reporter/csreport"
-	args := []string{"-url", url, "-amount", amount}
+	args := []string{url, amount}
+	println(args)
 	binaryCmd := exec.Command(cmd, args...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
