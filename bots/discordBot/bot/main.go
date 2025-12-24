@@ -11,6 +11,7 @@ import (
 	clear "discordBot/functions/clearbotmsg"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	steammarket "discordBot/functions/steamMarket"
 	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
@@ -174,7 +175,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			return
 		}
 
-		output, err := util.SteamItemAPICall(itemName)
+		output, err := steammarket.SteamItemAPICall(itemName)
 		if err != nil {
 			server.ChannelMessageSend(message.ChannelID, "Failed to fetch market data!")
 		} else {
