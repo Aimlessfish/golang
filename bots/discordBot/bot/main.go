@@ -163,10 +163,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 	/*** Steam Market Command Handlers ***/
 
 	// get market item info
-	if strings.HasPrefix(message.Content, "!market") || strings.HasPrefix(message.Content, "market") {
+	if strings.HasPrefix(message.Content, "!price") || strings.HasPrefix(message.Content, "price") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 2 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !market <item_name>")
+			server.ChannelMessageSend(message.ChannelID, "Usage: !price <item_name>")
 			return
 		}
 		itemName := strings.Join(parts[1:], " ")
@@ -175,12 +175,32 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			return
 		}
 
-		output, err := steammarket.SteamItemAPICall(itemName)
-		if err != nil {
-			server.ChannelMessageSend(message.ChannelID, "Failed to fetch market data!")
-		} else {
+		var output string
+		var err error
+
+		// Try PriceEmpire first
+		output, err = steammarket.PriceEmpireItemCall(itemName)
+		if err == nil && output != "" {
 			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+			return
 		}
+
+		// Try SteamWebApi next
+		output, err = steammarket.SteamWebApiItemCall(itemName)
+		if err == nil && output != "" {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+			return
+		}
+
+		// Try SteamApis last
+		output, err = steammarket.SteamApisItemCall(itemName)
+		if err == nil && output != "" {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+			return
+		}
+
+		// If all fail
+		server.ChannelMessageSend(message.ChannelID, "Failed to fetch market data!")
 	}
 
 }
