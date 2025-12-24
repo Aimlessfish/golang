@@ -159,4 +159,27 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(message.ChannelID, "\n"+output)
 		}
 	}
+	/*** Steam Market Command Handlers ***/
+
+	// get market item info
+	if strings.HasPrefix(message.Content, "!market") || strings.HasPrefix(message.Content, "market") {
+		parts := util.SplitArgs(message.Content)
+		if len(parts) < 2 {
+			server.ChannelMessageSend(message.ChannelID, "Usage: !market <item_name>")
+			return
+		}
+		itemName := strings.Join(parts[1:], " ")
+		if itemName == "" {
+			server.ChannelMessageSend(message.ChannelID, "you did not provide a valid item name")
+			return
+		}
+
+		output, err := util.SteamItemAPICall(itemName)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Failed to fetch market data!")
+		} else {
+			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+		}
+	}
+
 }
