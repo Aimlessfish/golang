@@ -43,3 +43,13 @@ func GenerateUsername(input string) string {
 	username := prefix + base + suffix
 	return username
 }
+
+// GenerateRandomString generates a random string of specified length
+func GenerateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#~'@][[{}|;:,.<>?/!$%^&*()-_=+"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}

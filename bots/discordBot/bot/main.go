@@ -107,4 +107,18 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		username := generators.GenerateUsername(input)
 		server.ChannelMessageSend(channelID, "Generated Username: "+username)
 	}
+	if strings.HasPrefix(message.Content, "!string") {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid length for the random string. Example: !string 10")
+			return
+		}
+		length, err := strconv.Atoi(parts[1])
+		if err != nil || length <= 0 {
+			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+			return
+		}
+		randomString := generators.GenerateRandomString(length)
+		server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
+	}
 }
