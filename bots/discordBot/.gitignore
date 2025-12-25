@@ -1,3 +1,8 @@
 .env
 .json
 chrome-profiles/
+=======
+chrome-profiles/
+
+.env
+>>>>>>> 96b00117bef888d21faf78558e35d7d08fcdc569
