@@ -59,22 +59,22 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		GuildID:   message.GuildID,
 	})
 
-	if message.Content == "!help" || message.Content == "help" || message.Content == "commands" {
+	if message.Content == "/help" || message.Content == "help" || message.Content == "commands" {
 		help.DisplayHelp(channelID, server, message)
 	}
-	if message.Content == "!proxy" || message.Content == "Proxy" || message.Content == "http proxy" || message.Content == "proxy" || message.Content == "get http proxy" {
+	if message.Content == "/proxy" || message.Content == "Proxy" || message.Content == "http proxy" || message.Content == "proxy" || message.Content == "get http proxy" {
 		proxies := getproxy.ProxyHandler(1)
 		for _, proxy := range proxies {
 			server.ChannelMessageSend(message.ChannelID, proxy)
 		}
 	}
-	if message.Content == "!clear" {
+	if message.Content == "/clear" {
 		v := clear.ClearBotMessages(userID, channelID, server, message)
 		if !v {
 			server.ChannelMessageSend(message.ChannelID, "failed to clear messages!")
 		}
 	}
-	if message.Content == "!Football" || message.Content == "!football" {
+	if message.Content == "/Football" || message.Content == "/football" {
 		err := betting.MatchOdds(server, message)
 		if err != nil {
 			server.ChannelMessageSend(channelID, "Failed to retrieve upcoming matches! ")
@@ -82,10 +82,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 	}
 	/***Steam Report Functions***/
 	// Main Report Message Handler
-	if strings.HasPrefix(message.Content, "!report") || strings.HasPrefix(message.Content, "report") {
+	if strings.HasPrefix(message.Content, "/report") || strings.HasPrefix(message.Content, "report") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 2 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !report <uid> <amount>")
+			server.ChannelMessageSend(message.ChannelID, "Usage: /report <uid> <amount>")
 			return
 		}
 		uid := parts[1]
@@ -103,10 +103,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 	// Bot Addition Handler
-	if strings.HasPrefix(message.Content, "!bot-add") || strings.HasPrefix(message.Content, "bot-add") {
+	if strings.HasPrefix(message.Content, "/bot-add") || strings.HasPrefix(message.Content, "bot-add") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 3 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-add <username> <password>")
+			server.ChannelMessageSend(message.ChannelID, "Usage: /bot-add <username> <password>")
 			return
 		}
 		username := parts[1]
@@ -125,10 +125,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 	// Bot Removal HAndler
-	if strings.HasPrefix(message.Content, "!bot-remove") || strings.HasPrefix(message.Content, "bot-remove") || strings.HasPrefix(message.Content, "!bot-del") || strings.HasPrefix(message.Content, "bot-del") {
+	if strings.HasPrefix(message.Content, "/bot-remove") || strings.HasPrefix(message.Content, "bot-remove") || strings.HasPrefix(message.Content, "/bot-del") || strings.HasPrefix(message.Content, "bot-del") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 2 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-remove <username>")
+			server.ChannelMessageSend(message.ChannelID, "Usage: /bot-remove <username>")
 			return
 		}
 		username := parts[1]
@@ -146,10 +146,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 	// List Handler
-	if strings.HasPrefix(message.Content, "!bot-list") || strings.HasPrefix(message.Content, "bot-list") {
+	if strings.HasPrefix(message.Content, "/bot-list") || strings.HasPrefix(message.Content, "bot-list") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 1 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !bot-list")
+			server.ChannelMessageSend(message.ChannelID, "Usage: /bot-list")
 			return
 		}
 		command := "bot-list"
@@ -160,50 +160,50 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			server.ChannelMessageSend(message.ChannelID, "\n"+output)
 		}
+	}
+	/***Generators***/
+	if strings.HasPrefix(message.Content, "/number ") {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: /number 5")
+			return
+		}
+		input := parts[1]
+		length, err := strconv.Atoi(input)
+		if err != nil || length <= 0 {
+			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+			return
+		}
+		if length > 18 {
+			server.ChannelMessageSend(channelID, "Please provide a number length between 1 and 18.")
+			return
+		}
+		randomNumber := generators.GenerateRandomNumber(input)
+		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+	}
 
-		if strings.HasPrefix(message.Content, "!number ") {
-			parts := strings.Split(message.Content, " ")
-			if len(parts) != 2 {
-				server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: !number 5")
-				return
-			}
-			input := parts[1]
-			length, err := strconv.Atoi(input)
-			if err != nil || length <= 0 {
-				server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
-				return
-			}
-			if length > 18 {
-				server.ChannelMessageSend(channelID, "Please provide a number length between 1 and 18.")
-				return
-			}
-			randomNumber := generators.GenerateRandomNumber(input)
-			server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+	if strings.HasPrefix(message.Content, "/username ") {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid input for the username. Example: /username JohnDoe")
+			return
 		}
-
-		if strings.HasPrefix(message.Content, "!username ") {
-			parts := strings.Split(message.Content, " ")
-			if len(parts) != 2 {
-				server.ChannelMessageSend(channelID, "Please provide a valid input for the username. Example: !username JohnDoe")
-				return
-			}
-			input := parts[1]
-			username := generators.GenerateUsername(input)
-			server.ChannelMessageSend(channelID, "Generated Username: "+username)
+		input := parts[1]
+		username := generators.GenerateUsername(input)
+		server.ChannelMessageSend(channelID, "Generated Username: "+username)
+	}
+	if strings.HasPrefix(message.Content, "/string") {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid length for the random string. Example: /string 10")
+			return
 		}
-		if strings.HasPrefix(message.Content, "!string") {
-			parts := strings.Split(message.Content, " ")
-			if len(parts) != 2 {
-				server.ChannelMessageSend(channelID, "Please provide a valid length for the random string. Example: !string 10")
-				return
-			}
-			length, err := strconv.Atoi(parts[1])
-			if err != nil || length <= 0 {
-				server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
-				return
-			}
-			randomString := generators.GenerateRandomString(length)
-			server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
+		length, err := strconv.Atoi(parts[1])
+		if err != nil || length <= 0 {
+			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+			return
 		}
+		randomString := generators.GenerateRandomString(length)
+		server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
 	}
 }
