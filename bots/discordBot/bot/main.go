@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -83,6 +84,15 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			return
 		}
 		input := parts[1]
+		length, err := strconv.Atoi(input)
+		if err != nil || length <= 0 {
+			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+			return
+		}
+		if length > 18 {
+			server.ChannelMessageSend(channelID, "Please provide a number length between 1 and 18.")
+			return
+		}
 		randomNumber := generators.GenerateRandomNumber(input)
 		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
 	}
