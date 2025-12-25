@@ -1,8 +1,42 @@
+# Go build and dependency files
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Dependency directories (vendor/ is used in Go modules)
+vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment and secrets
 .env
 .json
-chrome-profiles/
-=======
+
+# Credentials and sensitive files
+steam_credentials.json
+
+# Chrome browser profiles and data
 chrome-profiles/
 
-.env
->>>>>>> 96b00117bef888d21faf78558e35d7d08fcdc569
+*.pngg
+*.jpg
+*.jpeg
+*.gif
+*.bmp

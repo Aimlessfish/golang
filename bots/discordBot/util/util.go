@@ -3,6 +3,7 @@ package util
 import (
 	"log/slog"
 	"os"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -13,6 +14,7 @@ func GetToken() string {
 	logger := LoggerInit("GET BOT", "BOT")
 	logger.Info("Getting bot token")
 
+	// Load .env from project root only
 	err := godotenv.Load()
 	if err != nil {
 		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
@@ -25,6 +27,13 @@ func GetToken() string {
 			return token
 		}
 	}
+	return defaultVal
+}
+
+func LoadEnv() error {
+
+	// Load .env from project root only
+	return godotenv.Load()
 }
 
 func LoggerInit(logID, descriptor string) *slog.Logger {
@@ -52,4 +61,42 @@ func MessageTTL(msgID string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// SplitArgs splits a command string into arguments, handling quoted strings.
+func SplitArgs(input string) []string {
+	var args []string
+	var current string
+	inQuotes := false
+	for i := 0; i < len(input); i++ {
+		c := input[i]
+		switch c {
+		case ' ':
+			if inQuotes {
+				current += string(c)
+			} else if len(current) > 0 {
+				args = append(args, current)
+				current = ""
+			}
+		case '"':
+			inQuotes = !inQuotes
+		default:
+			current += string(c)
+		}
+	}
+	if len(current) > 0 {
+		args = append(args, current)
+	}
+	return args
+}
+func ExecReportBinary(command string, args ...string) (string, error) {
+	logger := LoggerInit("UTIL", "ExecReportBinary")
+	cmd := "./reporter/csreport"
+	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
+	output, err := binaryCmd.CombinedOutput()
+	if err != nil {
+		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+		return string(output), err
+	}
+	return string(output), nil
 }
