@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -77,19 +76,25 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		}
 	}
 
-	if strings.HasPrefix(message.Content, "!number ") || message.Content == "number" {
+	if strings.HasPrefix(message.Content, "!number ") {
 		parts := strings.Split(message.Content, " ")
 		if len(parts) != 2 {
 			server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: !number 5")
 			return
 		}
 		input := parts[1]
-		length, err := strconv.Atoi(input)
-		if err != nil || length <= 0 {
-			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+		randomNumber := generators.GenerateRandomNumber(input)
+		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+	}
+
+	if strings.HasPrefix(message.Content, "!username ") {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid input for the username. Example: !username JohnDoe")
 			return
 		}
-		randomNumber := generators.GenerateRandomNumber(length)
-		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+		input := parts[1]
+		username := generators.GenerateUsername(input)
+		server.ChannelMessageSend(channelID, "Generated Username: "+username)
 	}
 }

@@ -8,8 +8,13 @@ import (
 )
 
 // GenerateRandomNumber returns a random number as a string with the specified length
-func GenerateRandomNumber(length int) string {
-	if length <= 0 {
+func GenerateRandomNumber(input string) string {
+	util.LoggerInit("generators", "randomnumber")
+	if input == "" {
+		return ""
+	}
+	length, err := strconv.Atoi(input)
+	if err != nil || length <= 0 {
 		return ""
 	}
 	min := int64(1)
@@ -18,7 +23,9 @@ func GenerateRandomNumber(length int) string {
 	}
 	max := min*10 - 1
 	n := rand.Int63n(max-min+1) + min
-	return strconv.FormatInt(n, 10)
+	intOut := strconv.FormatInt(n, 10)
+	strOut := string(intOut)
+	return strOut
 }
 
 // GenerateUsername takes user input and returns a realistic username

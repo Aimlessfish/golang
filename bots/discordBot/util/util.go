@@ -18,7 +18,7 @@ func GetToken() string {
 		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
 		return "broke mate"
 	} else {
-		token := os.Getenv("TOKEN")
+		token := os.Getenv("DISCORD_BOT_TOKEN")
 		if len(token) == 0 {
 			panic("Token length == 0!")
 		} else {
