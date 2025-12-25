@@ -161,48 +161,49 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			server.ChannelMessageSend(message.ChannelID, "\n"+output)
 		}
 
-	if strings.HasPrefix(message.Content, "!number ") {
-		parts := strings.Split(message.Content, " ")
-		if len(parts) != 2 {
-			server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: !number 5")
-			return
+		if strings.HasPrefix(message.Content, "!number ") {
+			parts := strings.Split(message.Content, " ")
+			if len(parts) != 2 {
+				server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: !number 5")
+				return
+			}
+			input := parts[1]
+			length, err := strconv.Atoi(input)
+			if err != nil || length <= 0 {
+				server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+				return
+			}
+			if length > 18 {
+				server.ChannelMessageSend(channelID, "Please provide a number length between 1 and 18.")
+				return
+			}
+			randomNumber := generators.GenerateRandomNumber(input)
+			server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
 		}
-		input := parts[1]
-		length, err := strconv.Atoi(input)
-		if err != nil || length <= 0 {
-			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
-			return
-		}
-		if length > 18 {
-			server.ChannelMessageSend(channelID, "Please provide a number length between 1 and 18.")
-			return
-		}
-		randomNumber := generators.GenerateRandomNumber(input)
-		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
-	}
 
-	if strings.HasPrefix(message.Content, "!username ") {
-		parts := strings.Split(message.Content, " ")
-		if len(parts) != 2 {
-			server.ChannelMessageSend(channelID, "Please provide a valid input for the username. Example: !username JohnDoe")
-			return
+		if strings.HasPrefix(message.Content, "!username ") {
+			parts := strings.Split(message.Content, " ")
+			if len(parts) != 2 {
+				server.ChannelMessageSend(channelID, "Please provide a valid input for the username. Example: !username JohnDoe")
+				return
+			}
+			input := parts[1]
+			username := generators.GenerateUsername(input)
+			server.ChannelMessageSend(channelID, "Generated Username: "+username)
 		}
-		input := parts[1]
-		username := generators.GenerateUsername(input)
-		server.ChannelMessageSend(channelID, "Generated Username: "+username)
-	}
-	if strings.HasPrefix(message.Content, "!string") {
-		parts := strings.Split(message.Content, " ")
-		if len(parts) != 2 {
-			server.ChannelMessageSend(channelID, "Please provide a valid length for the random string. Example: !string 10")
-			return
+		if strings.HasPrefix(message.Content, "!string") {
+			parts := strings.Split(message.Content, " ")
+			if len(parts) != 2 {
+				server.ChannelMessageSend(channelID, "Please provide a valid length for the random string. Example: !string 10")
+				return
+			}
+			length, err := strconv.Atoi(parts[1])
+			if err != nil || length <= 0 {
+				server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+				return
+			}
+			randomString := generators.GenerateRandomString(length)
+			server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
 		}
-		length, err := strconv.Atoi(parts[1])
-		if err != nil || length <= 0 {
-			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
-			return
-		}
-		randomString := generators.GenerateRandomString(length)
-		server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
 	}
 }

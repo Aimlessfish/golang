@@ -27,7 +27,6 @@ func GetToken() string {
 			return token
 		}
 	}
-	return defaultVal
 }
 
 func LoadEnv() error {
@@ -91,7 +90,7 @@ func SplitArgs(input string) []string {
 }
 func ExecReportBinary(command string, args ...string) (string, error) {
 	logger := LoggerInit("UTIL", "ExecReportBinary")
-	cmd := "./reporter/csreport"
+	cmd := "./bin/csreport"
 	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
