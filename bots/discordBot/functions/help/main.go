@@ -12,6 +12,8 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "!clear", Value: "Clears _100_ bot sent messages!"},
 			{Name: "!football", Value: "Pulls all upcoming football matches in the UK and displays odds grouped by bookies and match"},
 			{Name: "!proxy", Value: "Sends 1, tested; working, HTTP proxy."},
+			{Name: "!number <length>", Value: "Generates a random number with the specified number of digits (1-18). Example: !number 5"},
+			{Name: "!username <input>", Value: "Generates a realistic username based on your input. Example: !username JohnDoe"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
