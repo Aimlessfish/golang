@@ -4,10 +4,13 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 
 	betting "discordBot/functions/betting"
 	clear "discordBot/functions/clearbotmsg"
+	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
 	util "discordBot/util"
@@ -72,5 +75,21 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		if err != nil {
 			server.ChannelMessageSend(channelID, "Failed to retrieve upcoming matches! ")
 		}
+	}
+
+	if strings.HasPrefix(message.Content, "!number ") || message.Content == "number" {
+		parts := strings.Split(message.Content, " ")
+		if len(parts) != 2 {
+			server.ChannelMessageSend(channelID, "Please provide a valid length for the random number. Example: !number 5")
+			return
+		}
+		input := parts[1]
+		length, err := strconv.Atoi(input)
+		if err != nil || length <= 0 {
+			server.ChannelMessageSend(channelID, "Please provide a valid positive integer for the length.")
+			return
+		}
+		randomNumber := generators.GenerateRandomNumber(length)
+		server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
 	}
 }
