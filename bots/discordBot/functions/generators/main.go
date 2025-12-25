@@ -17,15 +17,17 @@ func GenerateRandomNumber(input string) string {
 	if err != nil || length <= 0 {
 		return ""
 	}
+	// int64 can only safely represent up to 18 digits
+	if length > 18 {
+		return "" // or return an error message if you prefer
+	}
 	min := int64(1)
 	for i := 1; i < length; i++ {
 		min *= 10
 	}
 	max := min*10 - 1
 	n := rand.Int63n(max-min+1) + min
-	intOut := strconv.FormatInt(n, 10)
-	strOut := string(intOut)
-	return strOut
+	return strconv.FormatInt(n, 10)
 }
 
 // GenerateUsername takes user input and returns a realistic username
