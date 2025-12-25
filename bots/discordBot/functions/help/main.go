@@ -14,6 +14,7 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "!proxy", Value: "Sends 1, tested; working, HTTP proxy."},
 			{Name: "!number <length>", Value: "Generates a random number with the specified number of digits (1-18). Example: !number 5"},
 			{Name: "!username <input>", Value: "Generates a realistic username based on your input. Example: !username JohnDoe"},
+			{Name: "!string <length>", Value: "Generates a random string with the specified length. Example: !string 8"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
