@@ -19,6 +19,9 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "!bot-remove <username>", Value: "Remove a Steam bot account by username."},
 			{Name: "!bot-del <username>", Value: "Remove a Steam bot account by username."},
 			{Name: "!report <url/steam64> [amount]", Value: "Report a player using the specified number of bots (default 1)."},
+			{Name: "!number <length>", Value: "Generates a random number with the specified number of digits (1-18). Example: !number 5"},
+			{Name: "!username <input>", Value: "Generates a realistic username based on your input. Example: !username JohnDoe"},
+			{Name: "!string <length>", Value: "Generates a random string with the specified length. Example: !string 8"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)

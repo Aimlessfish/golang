@@ -17,35 +17,14 @@ func GetToken() string {
 	// Load .env from project root only
 	err := godotenv.Load()
 	if err != nil {
-		logger.Info("No .env file found", "ERROR", err.Error())
-	}
-
-	// Try DISCORD_BOT_TOKEN first, then TOKEN (legacy format)
-	token := os.Getenv("DISCORD_BOT_TOKEN")
-	if len(token) == 0 {
-		token = os.Getenv("TOKEN")
-	}
-
-	if len(token) == 0 {
-		panic("Token not found! Please set DISCORD_BOT_TOKEN or TOKEN in .env file")
-	}
-
-	return token
-}
-
-func GetEnvAsInt(key string, defaultVal int) int {
-	if value := os.Getenv(key); value != "" {
-		if intVal, err := strconv.Atoi(value); err == nil {
-			return intVal
-		}
-	}
-	return defaultVal
-}
-
-func GetEnvAsBool(key string, defaultVal bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if boolVal, err := strconv.ParseBool(value); err == nil {
-			return boolVal
+		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
+		return "broke mate"
+	} else {
+		token := os.Getenv("DISCORD_BOT_TOKEN")
+		if len(token) == 0 {
+			panic("Token length == 0!")
+		} else {
+			return token
 		}
 	}
 	return defaultVal
