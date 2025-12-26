@@ -18,12 +18,9 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "/number <length>", Value: "Generates a random number with the specified number of digits (1-18). Example: !number 5"},
 			{Name: "/username <input>", Value: "Generates a realistic username based on your input. Example: !username JohnDoe"},
 			{Name: "/string <length>", Value: "Generates a random string with the specified length. Example: !string 8"},
-			// --- Temp Mail ---
-			{Name: "\u200B", Value: "**Temp Mail Commands:**", Inline: false},
-			{Name: "/yopmail", Value: "Get a new YOPmail email address."},
-			{Name: "/mail", Value: "Get a new GuerrillaMail email address."},
-			{Name: "/inbox <INBOX_TOKEN>", Value: "Show the GuerrillaMail inbox for your token. \nExample: /inbox <INBOX_TOKEN>"},
-
+			// --- Temp Mail Commands ---
+			{Name: "\u200B", Value: "_**Temp Mail Commands:**_", Inline: false},
+			{Name: "/help mail", Value: "Displays Temp Mail commands."},
 			// --- Steam Bot Commands ---
 			{Name: "\u200B", Value: "_**Steam Bot Commands:**_", Inline: false},
 			{Name: "/help steam", Value: "Displays Steam bot commands."},
@@ -44,6 +41,21 @@ func DisplayHelpSteam(channelID string, server *discordgo.Session, message *disc
 			{Name: "/bot-remove <username>", Value: "Remove a Steam bot account by username."},
 			{Name: "/bot-del <username>", Value: "Remove a Steam bot account by username."},
 			{Name: "/report <url/steam64> [amount]", Value: "Report a player using the specified number of bots (default 1)."},
+		},
+	}
+	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
+	return nil
+}
+
+func DisplayHelpMail(channelID string, server *discordgo.Session, message *discordgo.MessageCreate) error {
+	embeddedMsg := &discordgo.MessageEmbed{
+		Title:       "Temp Mail Help",
+		Description: "Temp Mail Commands: ",
+		Color:       0x00ffcc,
+		Fields: []*discordgo.MessageEmbedField{
+			{Name: "/yopmail", Value: "Get a new YOPmail email address."},
+			{Name: "/mail", Value: "Get a new GuerrillaMail email address."},
+			{Name: "/inbox <token>", Value: "Show the GuerrillaMail inbox for your token. \nExample: /inbox <INBOX_TOKEN>"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)

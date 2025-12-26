@@ -65,13 +65,15 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 
 		if strings.HasPrefix(message.Content, "/help") || strings.HasPrefix(message.Content, "help") || strings.HasPrefix(message.Content, "commands") {
 			//chop the string get the argument and call the steam helo function
-			steam := strings.Contains(message.Content, "steam")
-			if steam {
+			switch {
+			case strings.HasPrefix(message.Content, "/help steam"), strings.HasPrefix(message.Content, "help steam"):
 				help.DisplayHelpSteam(channelID, server, message)
 				return
-			} else {
+			case strings.HasPrefix(message.Content, "/help mail"), strings.HasPrefix(message.Content, "help mail"):
+				help.DisplayHelpMail(channelID, server, message)
+				return
+			default:
 				help.DisplayHelp(channelID, server, message)
-
 			}
 		}
 		if message.Content == "/proxy" {
