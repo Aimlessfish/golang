@@ -162,7 +162,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if err != nil {
 				server.ChannelMessageSend(message.ChannelID, "Failed to list bot accounts!")
 			} else {
-				server.ChannelMessageSend(message.ChannelID, "\n"+output)
+				server.ChannelMessageSend(message.ChannelID, "\n"+"```"+output+"```")
 			}
 		}
 		/***Generators***/
@@ -183,7 +183,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				return
 			}
 			randomNumber := generators.GenerateRandomNumber(input)
-			server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+			server.ChannelMessageSend(channelID, "```Generated Random Number: "+randomNumber+"```")
 		}
 
 		if strings.HasPrefix(message.Content, "/username ") {
@@ -194,7 +194,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 			input := parts[1]
 			username := generators.GenerateUsername(input)
-			server.ChannelMessageSend(channelID, "Generated Username: "+username)
+			server.ChannelMessageSend(channelID, "```Generated Username: "+username+"```")
 		}
 		if strings.HasPrefix(message.Content, "/string") {
 			parts := strings.Split(message.Content, " ")
@@ -208,7 +208,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				return
 			}
 			randomString := generators.GenerateRandomString(length)
-			server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
+			server.ChannelMessageSend(channelID, "```Generated Random String: "+randomString+"```")
 		}
 		if strings.HasPrefix(message.Content, "/yopmail") {
 			email, domains, err := tempmail.GetRandomYopmail()
@@ -218,7 +218,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to generate random email.")
 			} else {
-				server.ChannelMessageSend(channelID, "Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains)
+				server.ChannelMessageSend(channelID, "```Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains+"```")
 			}
 		}
 		if strings.HasPrefix(message.Content, "/email") {
@@ -226,7 +226,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")
 			} else {
-				server.ChannelMessageSend(channelID, "Email: "+email+"\nSID Token: "+sidToken)
+				server.ChannelMessageSend(channelID, "```Email: "+email+"\nSID Token: "+sidToken+"```")
 			}
 		}
 		if strings.HasPrefix(message.Content, "/inbox") {
@@ -257,9 +257,9 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				return
 			}
 			var msg strings.Builder
-			msg.WriteString("Guerrilla Inbox:\n")
+			msg.WriteString("***inbox:***\n")
 			for _, mail := range resp.List {
-				msg.WriteString("MailID: " + mail.MailID + " | From: " + mail.MailFrom + "\n")
+				msg.WriteString("```MailID: " + mail.MailID + " | From: " + mail.MailFrom + "```\n")
 			}
 			server.ChannelMessageSend(channelID, msg.String())
 		}
