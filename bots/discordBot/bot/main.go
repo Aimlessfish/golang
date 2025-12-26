@@ -72,6 +72,15 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			case strings.HasPrefix(message.Content, "/help mail"), strings.HasPrefix(message.Content, "help mail"):
 				help.DisplayHelpMail(channelID, server, message)
 				return
+			case strings.HasPrefix(message.Content, "/help util"), strings.HasPrefix(message.Content, "help utility"):
+				help.DisplayUtilityHelp(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help bets"), strings.HasPrefix(message.Content, "help betting"):
+				help.DisplayBettingHelp(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help generators"), strings.HasPrefix(message.Content, "help generators"):
+				help.DisplayHelpGenerators(channelID, server, message)
+				return
 			default:
 				help.DisplayHelp(channelID, server, message)
 			}
