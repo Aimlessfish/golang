@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,6 +15,7 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	"discordBot/functions/tempmail"
 	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
@@ -207,6 +210,60 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			randomString := generators.GenerateRandomString(length)
 			server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
 		}
+		if strings.HasPrefix(message.Content, "/yopmail") {
+			email, domains, err := tempmail.GetRandomYopmail()
+			parts := strings.Split(email, "'")
+			prefix := parts[1]
+			url := "https://yopmail.com/en/inbox?login=" + prefix
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to generate random email.")
+			} else {
+				server.ChannelMessageSend(channelID, "Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains)
+			}
+		}
+		if strings.HasPrefix(message.Content, "/email") {
+			email, sidToken, err := tempmail.GetRandomGuerrillaEmail()
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")
+			} else {
+				server.ChannelMessageSend(channelID, "Email: "+email+"\nSID Token: "+sidToken)
+			}
+		}
+		if strings.HasPrefix(message.Content, "/inbox") {
+			parts := util.SplitArgs(message.Content)
+			if len(parts) < 2 {
+				server.ChannelMessageSend(message.ChannelID, "Usage: /inbox <sid_token>")
+				return
+			}
+			sidToken := parts[1]
+			if sidToken == "" {
+				server.ChannelMessageSend(message.ChannelID, "you did not provide a valid sid_token")
+				return
+			}
+			output, err := tempmail.GetGuerrillaInboxRaw(sidToken) // This should return a Go struct/slice
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to get inbox: "+err.Error())
+				return
+			}
+			fmt.Println("DEBUG GuerrillaMail output:", output)
+			var resp tempmail.GuerrillaInboxResponse
+			err = json.Unmarshal([]byte(output), &resp)
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to parse inbox JSON: "+err.Error())
+				return
+			}
+			if len(resp.List) == 0 {
+				server.ChannelMessageSend(channelID, "No emails found in inbox.")
+				return
+			}
+			var msg strings.Builder
+			msg.WriteString("Guerrilla Inbox:\n")
+			for _, mail := range resp.List {
+				msg.WriteString("MailID: " + mail.MailID + " | From: " + mail.MailFrom + "\n")
+			}
+			server.ChannelMessageSend(channelID, msg.String())
+		}
+
 	} else {
 		server.ChannelMessageSend(channelID, "Unrecognized command. Type /help for a list of commands.")
 	}

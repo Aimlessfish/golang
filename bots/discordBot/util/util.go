@@ -99,3 +99,12 @@ func ExecReportBinary(command string, args ...string) (string, error) {
 	}
 	return string(output), nil
 }
+
+// execCommandOutput runs a shell command and returns its output as a string
+func ExecCommandOutput(cmd string) (string, error) {
+	out, err := exec.Command("sh", "-c", cmd).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
