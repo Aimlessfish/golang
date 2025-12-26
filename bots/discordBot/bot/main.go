@@ -63,8 +63,16 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			GuildID:   message.GuildID,
 		})
 
-		if message.Content == "/help" || message.Content == "help" || message.Content == "commands" {
-			help.DisplayHelp(channelID, server, message)
+		if strings.HasPrefix(message.Content, "/help") || strings.HasPrefix(message.Content, "help") || strings.HasPrefix(message.Content, "commands") {
+			//chop the string get the argument and call the steam helo function
+			steam := strings.Contains(message.Content, "steam")
+			if steam {
+				help.DisplayHelpSteam(channelID, server, message)
+				return
+			} else {
+				help.DisplayHelp(channelID, server, message)
+
+			}
 		}
 		if message.Content == "/proxy" {
 			proxies := getproxy.ProxyHandler(1)
@@ -221,7 +229,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				server.ChannelMessageSend(channelID, "```Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains+"```")
 			}
 		}
-		if strings.HasPrefix(message.Content, "/email") {
+		if strings.HasPrefix(message.Content, "/mmail") {
 			email, sidToken, err := tempmail.GetRandomGuerrillaEmail()
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")
