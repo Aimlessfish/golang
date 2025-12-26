@@ -229,7 +229,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				server.ChannelMessageSend(channelID, "```Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains+"```")
 			}
 		}
-		if strings.HasPrefix(message.Content, "/mmail") {
+		if strings.HasPrefix(message.Content, "/mail") {
 			email, sidToken, err := tempmail.GetRandomGuerrillaEmail()
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")

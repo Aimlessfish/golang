@@ -20,7 +20,8 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			{Name: "/string <length>", Value: "Generates a random string with the specified length. Example: !string 8"},
 			// --- Temp Mail ---
 			{Name: "\u200B", Value: "**Temp Mail Commands:**", Inline: false},
-			{Name: "/mail", Value: "Get a new temporary email address (GuerrillaMail)."},
+			{Name: "/yopmail", Value: "Get a new YOPmail email address."},
+			{Name: "/mail", Value: "Get a new GuerrillaMail email address."},
 			{Name: "/inbox <INBOX_TOKEN>", Value: "Show the GuerrillaMail inbox for your token. \nExample: /inbox <INBOX_TOKEN>"},
 
 			// --- Steam Bot Commands ---
