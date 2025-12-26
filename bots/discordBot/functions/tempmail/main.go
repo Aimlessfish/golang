@@ -45,17 +45,9 @@ type GuerrillaInboxResponse struct {
 }
 
 func (g *GuerrillaInboxResponse) UnmarshalJSON(data []byte) error {
-	type Stats struct {
-		SequenceMail     string          `json:"sequence_mail"`
-		CreatedAddresses json.RawMessage `json:"created_addresses"`
-		ReceivedEmails   string          `json:"received_emails"`
-		Total            string          `json:"total"`
-		TotalPerHour     string          `json:"total_per_hour"`
-	}
 	type Alias GuerrillaInboxResponse
 	aux := &struct {
-		Ts    json.RawMessage `json:"ts"`
-		Stats Stats           `json:"stats"`
+		Ts json.RawMessage `json:"ts"`
 		*Alias
 	}{
 		Alias: (*Alias)(g),
@@ -75,23 +67,6 @@ func (g *GuerrillaInboxResponse) UnmarshalJSON(data []byte) error {
 			g.Ts = ""
 		}
 	}
-	// stats.created_addresses: string or number
-	var caString string
-	if err := json.Unmarshal(aux.Stats.CreatedAddresses, &caString); err == nil {
-		g.Stats.CreatedAddresses = caString
-	} else {
-		var caNumber float64
-		if err := json.Unmarshal(aux.Stats.CreatedAddresses, &caNumber); err == nil {
-			g.Stats.CreatedAddresses = fmt.Sprintf("%.0f", caNumber)
-		} else {
-			g.Stats.CreatedAddresses = ""
-		}
-	}
-	// The rest of stats
-	g.Stats.SequenceMail = aux.Stats.SequenceMail
-	g.Stats.ReceivedEmails = aux.Stats.ReceivedEmails
-	g.Stats.Total = aux.Stats.Total
-	g.Stats.TotalPerHour = aux.Stats.TotalPerHour
 	return nil
 }
 

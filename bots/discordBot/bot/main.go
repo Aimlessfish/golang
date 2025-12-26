@@ -226,7 +226,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")
 			} else {
-				server.ChannelMessageSend(channelID, "```Email: "+email+"\nSID Token: "+sidToken+"```")
+				server.ChannelMessageSend(channelID, "```Email: "+email+"\nInbox Token: "+sidToken+"```")
 			}
 		}
 		if strings.HasPrefix(message.Content, "/inbox") {
@@ -259,7 +259,9 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			var msg strings.Builder
 			msg.WriteString("***inbox:***\n")
 			for _, mail := range resp.List {
-				msg.WriteString("```MailID: " + mail.MailID + " | From: " + mail.MailFrom + "```\n")
+				msg.WriteString("```MailID: " + mail.MailID +
+					" | From: " + mail.MailFrom +
+					" | Subject: " + mail.MailSubject + "```\n")
 			}
 			server.ChannelMessageSend(channelID, msg.String())
 		}
