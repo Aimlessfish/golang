@@ -1,9 +1,12 @@
 package bot
 
 import (
+	"encoding/json"
+	"html"
 	"log/slog"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -13,6 +16,7 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	"discordBot/functions/tempmail"
 	util "discordBot/util"
 
 	"github.com/bwmarrin/discordgo"
@@ -60,8 +64,27 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			GuildID:   message.GuildID,
 		})
 
-		if message.Content == "/help" || message.Content == "help" || message.Content == "commands" {
-			help.DisplayHelp(channelID, server, message)
+		if strings.HasPrefix(message.Content, "/help") || strings.HasPrefix(message.Content, "help") || strings.HasPrefix(message.Content, "commands") {
+			//chop the string get the argument and call the steam helo function
+			switch {
+			case strings.HasPrefix(message.Content, "/help steam"), strings.HasPrefix(message.Content, "help steam"):
+				help.DisplayHelpSteam(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help mail"), strings.HasPrefix(message.Content, "help mail"):
+				help.DisplayHelpMail(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help util"), strings.HasPrefix(message.Content, "help utility"):
+				help.DisplayUtilityHelp(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help bets"), strings.HasPrefix(message.Content, "help betting"):
+				help.DisplayBettingHelp(channelID, server, message)
+				return
+			case strings.HasPrefix(message.Content, "/help generators"), strings.HasPrefix(message.Content, "help generators"):
+				help.DisplayHelpGenerators(channelID, server, message)
+				return
+			default:
+				help.DisplayHelp(channelID, server, message)
+			}
 		}
 		if message.Content == "/proxy" {
 			proxies := getproxy.ProxyHandler(1)
@@ -159,7 +182,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if err != nil {
 				server.ChannelMessageSend(message.ChannelID, "Failed to list bot accounts!")
 			} else {
-				server.ChannelMessageSend(message.ChannelID, "\n"+output)
+				server.ChannelMessageSend(message.ChannelID, "\n"+"```"+output+"```")
 			}
 		}
 		/***Generators***/
@@ -180,7 +203,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				return
 			}
 			randomNumber := generators.GenerateRandomNumber(input)
-			server.ChannelMessageSend(channelID, "Generated Random Number: "+randomNumber)
+			server.ChannelMessageSend(channelID, "```Generated Random Number: "+randomNumber+"```")
 		}
 
 		if strings.HasPrefix(message.Content, "/username ") {
@@ -191,7 +214,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 			input := parts[1]
 			username := generators.GenerateUsername(input)
-			server.ChannelMessageSend(channelID, "Generated Username: "+username)
+			server.ChannelMessageSend(channelID, "```Generated Username: "+username+"```")
 		}
 		if strings.HasPrefix(message.Content, "/string") {
 			parts := strings.Split(message.Content, " ")
@@ -205,9 +228,178 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				return
 			}
 			randomString := generators.GenerateRandomString(length)
-			server.ChannelMessageSend(channelID, "Generated Random String: "+randomString)
+			server.ChannelMessageSend(channelID, "```Generated Random String: "+randomString+"```")
 		}
+		// email handlers
+		if strings.HasPrefix(message.Content, "/yopmail") {
+			email, domains, err := tempmail.GetRandomYopmail()
+			parts := strings.Split(email, "'")
+			prefix := parts[1]
+			url := "https://yopmail.com/en/inbox?login=" + prefix
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to generate random email.")
+			} else {
+				server.ChannelMessageSend(channelID, "```Email: "+prefix+"\nInbox: "+url+"\n"+"Alternate Domains:\n"+domains+"```")
+			}
+		}
+		if strings.HasPrefix(message.Content, "/mail") {
+			email, sidToken, err := tempmail.GetRandomGuerrillaEmail()
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to generate random guerrilla email.")
+			} else {
+				server.ChannelMessageSend(channelID, "```Email: "+email+"\nInbox Token: "+sidToken+"\n *Keep your token safe to access your inbox!*```")
+			}
+		}
+		if strings.HasPrefix(message.Content, "/inbox") {
+			parts := util.SplitArgs(message.Content)
+			if len(parts) < 2 {
+				server.ChannelMessageSend(message.ChannelID, "Usage: /inbox <sid_token>")
+				return
+			}
+			sidToken := parts[1]
+			if sidToken == "" {
+				server.ChannelMessageSend(message.ChannelID, "you did not provide a valid sid_token")
+				return
+			}
+			output, err := tempmail.GetGuerrillaInboxRaw(sidToken) // This should return a Go struct/slice
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to get inbox: "+err.Error())
+				return
+			}
+			var resp tempmail.GuerrillaInboxResponse
+			err = json.Unmarshal([]byte(output), &resp)
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to parse inbox JSON: "+err.Error())
+				return
+			}
+			if len(resp.List) == 0 {
+				server.ChannelMessageSend(channelID, "No emails found in inbox.")
+				return
+			}
+			var msg strings.Builder
+			msg.WriteString("***inbox:***\n")
+			for _, mail := range resp.List {
+				msg.WriteString("```MailID: " + mail.MailID +
+					" | From: " + mail.MailFrom +
+					" | Subject: " + mail.MailSubject + "```\n")
+			}
+			server.ChannelMessageSend(channelID, msg.String())
+		}
+		// view email content handler
+		if strings.HasPrefix(message.Content, "/view") {
+			parts := util.SplitArgs(message.Content)
+			if len(parts) < 3 {
+				server.ChannelMessageSend(message.ChannelID, "Usage: /view <sid_token> <mail_id>")
+				return
+			}
+			sidToken := parts[1]
+			mailID := parts[2]
+			if sidToken == "" || mailID == "" {
+				server.ChannelMessageSend(message.ChannelID, "you did not provide a valid sid_token or mail_id")
+				return
+			}
+			output, err := tempmail.GetGuerrillaMailContent(sidToken, mailID)
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to get email content: "+err.Error())
+				return
+			}
+
+			// Check for boolean or error response
+			var boolCheck bool
+			if err := json.Unmarshal([]byte(output), &boolCheck); err == nil {
+				server.ChannelMessageSend(channelID, "No email found or invalid response from API.")
+				return
+			}
+
+			// Try to unmarshal as email content
+			var emailContent struct {
+				MailID      string `json:"mail_id"`
+				MailFrom    string `json:"mail_from"`
+				MailSubject string `json:"mail_subject"`
+				MailExcerpt string `json:"mail_excerpt"`
+				MailBody    string `json:"mail_body"`
+			}
+			err = json.Unmarshal([]byte(output), &emailContent)
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to parse email content JSON: "+err.Error())
+				return
+			}
+			body := emailContent.MailBody
+			// Replace <br> and <br/> with newlines
+			body = regexp.MustCompile(`(?i)<br\s*/?>`).ReplaceAllString(body, "\n")
+			// Remove all other HTML tags
+			body = regexp.MustCompile(`(?s)<.*?>`).ReplaceAllString(body, "")
+			// Decode HTML entities
+			body = html.UnescapeString(body)
+
+			// Remove empty lines from the body
+			lines := strings.Split(body, "\n")
+			var nonEmptyLines []string
+			for _, line := range lines {
+				if strings.TrimSpace(line) != "" {
+					nonEmptyLines = append(nonEmptyLines, line)
+				}
+			}
+			cleanBody := strings.Join(nonEmptyLines, "\n")
+
+			msg := "```***Email Content:***\n"
+			msg += "From: " + emailContent.MailFrom + "\n"
+			msg += "Subject: " + emailContent.MailSubject + "\n"
+			msg += "Body:\n" + cleanBody + "```"
+			server.ChannelMessageSend(channelID, msg)
+
+		}
+		// delete email handler
+		if strings.HasPrefix(message.Content, "/del") {
+			parts := util.SplitArgs(message.Content)
+			if len(parts) < 3 {
+				server.ChannelMessageSend(message.ChannelID, "Usage: /del <sid_token> <mail_id>")
+				return
+			}
+			mailID := parts[1]
+			sidToken := parts[2]
+			if sidToken == "" || mailID == "" {
+				server.ChannelMessageSend(message.ChannelID, "you did not provide a valid sid_token or mail_id")
+				return
+			}
+			output, err := tempmail.DeleteGuerrillaMail(mailID, sidToken)
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to delete email: "+err.Error())
+				return
+			}
+			// Respond with 'deleted' if the API response is a valid JSON array or object (success)
+			trimmed := strings.TrimSpace(output)
+			if trimmed == "" {
+				server.ChannelMessageSend(channelID, "```deleted```")
+				return
+			}
+			var resp interface{}
+			err = json.Unmarshal([]byte(trimmed), &resp)
+			if err == nil {
+				server.ChannelMessageSend(channelID, "```deleted```")
+			} else {
+				server.ChannelMessageSend(channelID, "Delete API returned: "+trimmed)
+			}
+		}
+		if strings.HasPrefix(message.Content, "/address") {
+			parts := util.SplitArgs(message.Content)
+			if len(parts) < 2 {
+				server.ChannelMessageSend(message.ChannelID, "Usage: /address <email_address>")
+				return
+			}
+			emailAddress := parts[1]
+			if emailAddress == "" {
+				server.ChannelMessageSend(message.ChannelID, "you did not provide a valid email address")
+				return
+			}
+			email_addr, err := tempmail.GetGuerrillaEmailAddress(emailAddress, "en")
+			if err != nil {
+				server.ChannelMessageSend(message.ChannelID, "Failed to get email address!")
+			} else {
+				server.ChannelMessageSend(message.ChannelID, "```\nEmail: "+email_addr+"```")
+			}
+		} // End of email handlers
 	} else {
-		server.ChannelMessageSend(channelID, "Unrecognized command. Type /help for a list of commands.")
-	}
+		server.ChannelMessageSend(channelID, "Unrecognized command. Type `/help` to see available commands.")
+	} // End of slash command handler
 }
