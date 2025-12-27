@@ -27,7 +27,6 @@ func GetToken() string {
 			return token
 		}
 	}
-	return defaultVal
 }
 
 func LoadEnv() error {
