@@ -90,7 +90,7 @@ func SplitArgs(input string) []string {
 }
 func ExecReportBinary(command string, args ...string) (string, error) {
 	logger := LoggerInit("UTIL", "ExecReportBinary")
-	cmd := "./reporter/csreport"
+	cmd := "./functions/reporter/csreport"
 	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
