@@ -53,6 +53,9 @@ func DisplayHelpMail(channelID string, server *discordgo.Session, message *disco
 			{Name: "/yopmail", Value: "Get a new YOPmail email address."},
 			{Name: "/mail", Value: "Get a new GuerrillaMail email address."},
 			{Name: "/inbox <token>", Value: "Show the GuerrillaMail inbox for your token. \nExample: /inbox <INBOX_TOKEN>"},
+			{Name: "/view <mail_id> <token>", Value: "View a specific email from your GuerrillaMail inbox using the mail ID and your token. \nExample: /view <MAIL_ID> <INBOX_TOKEN>"},
+			{Name: "/del <mail_id> <token>", Value: "Delete a specific email from your GuerrillaMail inbox using the mail ID and your token. \nExample: /del <MAIL_ID> <INBOX_TOKEN>"},
+			{Name: "/address <token>", Value: "Get the GuerrillaMail email address associated with your token. \nExample: /address <INBOX_TOKEN>"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)

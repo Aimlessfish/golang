@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -31,17 +32,50 @@ type GuerrillaInboxResponse struct {
 	SidToken string              `json:"sid_token"`
 	Count    string              `json:"count"`
 	Users    string              `json:"users"`
-	Stats    struct {
-		SequenceMail     string `json:"sequence_mail"`
-		CreatedAddresses string `json:"created_addresses"`
-		ReceivedEmails   string `json:"received_emails"`
-		Total            string `json:"total"`
-		TotalPerHour     string `json:"total_per_hour"`
-	} `json:"stats"`
-	Auth struct {
+	Stats    GuerrillaStats      `json:"stats"`
+	Auth     struct {
 		Success    bool     `json:"success"`
 		ErrorCodes []string `json:"error_codes"`
 	} `json:"auth"`
+}
+
+type GuerrillaStats struct {
+	SequenceMail     string `json:"sequence_mail"`
+	CreatedAddresses string `json:"created_addresses"`
+	ReceivedEmails   string `json:"received_emails"`
+	Total            string `json:"total"`
+	TotalPerHour     string `json:"total_per_hour"`
+}
+
+func (s *GuerrillaStats) UnmarshalJSON(data []byte) error {
+	type Alias GuerrillaStats
+	aux := &struct {
+		CreatedAddresses json.RawMessage `json:"created_addresses"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	// created_addresses: string or number
+	var caString string
+	if err := json.Unmarshal(aux.CreatedAddresses, &caString); err == nil {
+		s.CreatedAddresses = caString
+	} else {
+		var caNumber float64
+		if err := json.Unmarshal(aux.CreatedAddresses, &caNumber); err == nil {
+			s.CreatedAddresses = fmt.Sprintf("%.0f", caNumber)
+		} else {
+			s.CreatedAddresses = ""
+		}
+	}
+	// The rest
+	s.SequenceMail = aux.SequenceMail
+	s.ReceivedEmails = aux.ReceivedEmails
+	s.Total = aux.Total
+	s.TotalPerHour = aux.TotalPerHour
+	return nil
 }
 
 func (g *GuerrillaInboxResponse) UnmarshalJSON(data []byte) error {
@@ -228,4 +262,53 @@ func geurrillaSetAddress(uid string) error {
 		return fmt.Errorf("failed to set guerrilla email address: %w", err)
 	}
 	return nil
+}
+
+func GetGuerrillaMailContent(mailID string, sidToken string) (string, error) {
+	// logger := util.LoggerInit("tempmail", "GetGuerrillaMailContent")
+	emailIDEsc := url.QueryEscape(mailID)
+	sidTokenEsc := url.QueryEscape(sidToken)
+	url := fmt.Sprintf("https://api.guerrillamail.com/ajax.php?f=fetch_email&email_id=%s&sid_token=%s", emailIDEsc, sidTokenEsc)
+	// logger.Info(url) // Suppressed noisy log
+	output, err := util.ExecCommandOutput("curl -s '" + url + "'")
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch guerrilla mail content: %w", err)
+	}
+	return output, nil
+}
+
+func DeleteGuerrillaMail(mailID string, sidToken string) (string, error) {
+	logger := util.LoggerInit("tempmail", "DeleteGuerrillaMail")
+	sidTokenEsc := url.QueryEscape(sidToken)
+	emailIDsParam := url.QueryEscape("email_ids[]") + "=" + url.QueryEscape(mailID)
+	url := fmt.Sprintf("https://api.guerrillamail.com/ajax.php?f=del_email&%s&sid_token=%s", emailIDsParam, sidTokenEsc)
+	logger.Info(url)
+	output, err := util.ExecCommandOutput("curl -s '" + url + "'")
+	if err != nil {
+		logger.Error("failed to delete guerrilla mail:", "error", err, "output<%s>", output)
+		return "", fmt.Errorf("failed to delete guerrilla mail: %w", err)
+	}
+	return output, nil
+}
+
+// GuerrillaAddressResponse represents the response from get_email_address
+type GuerrillaAddressResponse struct {
+	EmailAddr string `json:"email_addr"`
+}
+
+func GetGuerrillaEmailAddress(sidToken string, lang string) (string, error) {
+	if lang == "" {
+		lang = "en"
+	}
+	apiUrl := "https://api.guerrillamail.com/ajax.php?f=get_email_address&lang=" + url.QueryEscape(lang)
+	cmd := fmt.Sprintf("curl -s -H 'Cookie: PHPSESSID=%s' '%s'", sidToken, apiUrl)
+	output, err := util.ExecCommandOutput(cmd)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch guerrilla email address: %w", err)
+	}
+	var resp GuerrillaAddressResponse
+	if err := json.Unmarshal([]byte(output), &resp); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+	return resp.EmailAddr, nil
 }
