@@ -16,6 +16,7 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	"discordBot/functions/servercheck"
 	"discordBot/functions/tempmail"
 	util "discordBot/util"
 
@@ -400,7 +401,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 		} // End of email handlers
 		if strings.HasPrefix(message.Content, "/servers") {
-			output, err := util.ExecBinary("./bin/serverChecker/", "")
+			output, err := servercheck.CheckServer()
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to check server status: "+err.Error())
 				return
