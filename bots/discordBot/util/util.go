@@ -88,13 +88,12 @@ func SplitArgs(input string) []string {
 	}
 	return args
 }
-func ExecReportBinary(command string, args ...string) (string, error) {
-	logger := LoggerInit("UTIL", "ExecReportBinary")
-	cmd := "./bin/csreport"
-	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
+func ExecBinary(binaryPath string, command string, args ...string) (string, error) {
+	logger := LoggerInit("UTIL", "ExecBinary")
+	binaryCmd := exec.Command(binaryPath, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
-		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+		logger.Error("Failed to execute binary", "error", err, "output", string(output))
 		return string(output), err
 	}
 	return string(output), nil

@@ -1,5 +1,4 @@
 # Go build and dependency files
-bin/
 *.exe
 *.exe~
 *.dll
