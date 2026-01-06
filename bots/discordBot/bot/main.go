@@ -400,7 +400,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 		} // End of email handlers
 		if strings.HasPrefix(message.Content, "/servers") {
-			output, err := util.ExecBinary("./bin/serverChecker", "")
+			output, err := util.ExecBinary("./bin/serverChecker/", "")
 			if err != nil {
 				server.ChannelMessageSend(channelID, "Failed to check server status: "+err.Error())
 				return
