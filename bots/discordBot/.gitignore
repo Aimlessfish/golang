@@ -1,12 +1,3 @@
-# Go build and dependency files
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-
 # Dependency directories (vendor/ is used in Go modules)
 vendor/
 
