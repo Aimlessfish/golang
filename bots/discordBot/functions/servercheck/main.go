@@ -19,7 +19,6 @@ type ServerResponse struct {
 	Port    int
 	Address string `json:"address"`
 	Status  string `json:"status"`
-	Message string
 }
 
 // CheckServers calls the serviceChecker binary for each server, parses the JSON responses, and returns a user-friendly string
@@ -39,10 +38,9 @@ func CheckServers() (string, error) {
 		output, err := util.ExecBinary("./bin/serviceChecker", args)
 		if err != nil {
 			responses = append(responses, ServerResponse{
-				Name:    srv.Name,
-				Port:    srv.Port,
-				Status:  "Error",
-				Message: fmt.Sprintf("Failed to check: %s", err.Error()),
+				Name:   srv.Name,
+				Port:   srv.Port,
+				Status: "Error",
 			})
 			continue
 		}
@@ -51,10 +49,9 @@ func CheckServers() (string, error) {
 		err = json.Unmarshal([]byte(output), &responsesFromBinary)
 		if err != nil || len(responsesFromBinary) == 0 {
 			responses = append(responses, ServerResponse{
-				Name:    srv.Name,
-				Port:    srv.Port,
-				Status:  "Error",
-				Message: fmt.Sprintf("Failed to parse: %s\nRaw: %s", err.Error(), output),
+				Name:   srv.Name,
+				Port:   srv.Port,
+				Status: "Error",
 			})
 			continue
 		}
@@ -64,7 +61,6 @@ func CheckServers() (string, error) {
 		// Ensure the response has the correct name and port
 		response.Name = srv.Name
 		response.Port = srv.Port
-		response.Message = "Server is " + response.Status
 		responses = append(responses, response)
 	}
 
@@ -75,7 +71,7 @@ func CheckServers() (string, error) {
 
 	result := "🔍 Server Check Results:\n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("%s (Port %d):\n  %s\n", resp.Name, resp.Port, resp.Message)
+		result += fmt.Sprintf("%s (Port %d):\n  %s\n", resp.Name, resp.Port, resp.Status)
 	}
 	return result, nil
 }
