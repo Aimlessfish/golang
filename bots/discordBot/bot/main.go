@@ -16,6 +16,7 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	"discordBot/functions/servercheck"
 	"discordBot/functions/tempmail"
 	util "discordBot/util"
 
@@ -120,10 +121,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			if len(parts) >= 3 {
 				amount := parts[2]
 				server.ChannelMessageSend(message.ChannelID, amount+" Reports started for: \n (uid: "+uid+")")
-				util.ExecReportBinary(uid, amount)
+				util.ExecBinary("./bin/csreport", uid, amount)
 			} else {
 				server.ChannelMessageSend(message.ChannelID, "Report started for: \n (uid: "+uid+")")
-				util.ExecReportBinary(uid, "1")
+				util.ExecBinary("./bin/csreport", uid, "1")
 			}
 		}
 		// Bot Addition Handler
@@ -141,7 +142,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 			command := "add"
 			args := []string{username, password}
-			output, err := util.ExecReportBinary(command, args...)
+			output, err := util.ExecBinary("./bin/csreport", command, args...)
 			if err != nil {
 				server.ChannelMessageSend(message.ChannelID, "Failed to add bot account!")
 			} else {
@@ -162,7 +163,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 			command := "bot-remove"
 			args := []string{username}
-			output, err := util.ExecReportBinary(command, args...)
+			output, err := util.ExecBinary("./bin/csreport", command, args...)
 			if err != nil {
 				server.ChannelMessageSend(message.ChannelID, "Failed to remove bot account!")
 			} else {
@@ -178,7 +179,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			}
 			command := "bot-list"
 			args := []string{}
-			output, err := util.ExecReportBinary(command, args...)
+			output, err := util.ExecBinary("./bin/reporter/csreport", command, args...)
 			if err != nil {
 				server.ChannelMessageSend(message.ChannelID, "Failed to list bot accounts!")
 			} else {
@@ -399,6 +400,16 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				server.ChannelMessageSend(message.ChannelID, "```\nEmail: "+email_addr+"```")
 			}
 		} // End of email handlers
+		if strings.HasPrefix(message.Content, "/servers") {
+			output, err := servercheck.CheckServers()
+			if err != nil {
+				server.ChannelMessageSend(channelID, "Failed to check server status: "+err.Error())
+				return
+			}
+			server.ChannelMessageSend(channelID, output)
+
+		}
+
 	} else {
 		server.ChannelMessageSend(channelID, "Unrecognized command. Type `/help` to see available commands.")
 	} // End of slash command handler
