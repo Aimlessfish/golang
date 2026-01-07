@@ -69,9 +69,9 @@ func CheckServers() (string, error) {
 		return "🔍 No servers to check.", nil
 	}
 
-	result := "🔍 Server Check Results:\n"
+	result := "🔍 Server Check Results:\n \n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("%s (Port %d):\n  %s\n", resp.Name, resp.Port, resp.Status)
+		result += fmt.Sprintf("%s (Port %d):\n  %s\n \n", resp.Name, resp.Port, resp.Status)
 	}
 	return result, nil
 }
