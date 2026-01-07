@@ -17,6 +17,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const (
+	STEAM_URL = "https://steamcommunity.com/market/priceoverview/?appid=730&currency=3&market_hash_name="
+)
+
 func ConnectAPI(logger *slog.Logger) error {
 	logger = logger.With("Bot", "ConnectAPI")
 
@@ -175,32 +179,18 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 			return
 		}
 
-		var output string
+		// Call SteamMarketPriceOverviewURL to get price data
+		var priceOutput string
 		var err error
 
-		// Try PriceEmpire first
-		output, err = steammarket.PriceEmpireItemCall(itemName)
-		if err == nil && output != "" {
-			server.ChannelMessageSend(message.ChannelID, "\n"+output)
+		// Try to call the steammarket package function
+		priceOutput, err = steammarket.SteamMarketPriceOverviewURL(itemName)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Error fetching price: "+err.Error())
 			return
 		}
-
-		// Try SteamWebApi next
-		output, err = steammarket.SteamWebApiItemCall(itemName)
-		if err == nil && output != "" {
-			server.ChannelMessageSend(message.ChannelID, "\n"+output)
-			return
-		}
-
-		// Try SteamApis last
-		output, err = steammarket.SteamApisItemCall(itemName)
-		if err == nil && output != "" {
-			server.ChannelMessageSend(message.ChannelID, "\n"+output)
-			return
-		}
-
-		// If all fail
-		server.ChannelMessageSend(message.ChannelID, "Failed to fetch market data!")
+		server.ChannelMessageSend(message.ChannelID, "\n"+priceOutput)
+		return
 	}
 
 }
