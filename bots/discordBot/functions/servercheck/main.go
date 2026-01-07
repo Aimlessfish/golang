@@ -28,7 +28,7 @@ func CheckServers() (string, error) {
 	servers := []Server{
 		{"Minecraft Vanilla", 25565},
 		{"Minecraft Modded: Society Sunlit Valley", 25566},
-		{"Valheim", 2457},
+		{"Valheim", 2456},
 		// Add more servers as needed
 	}
 
