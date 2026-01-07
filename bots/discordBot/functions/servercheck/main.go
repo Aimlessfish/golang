@@ -28,7 +28,7 @@ func CheckServers() (string, error) {
 	servers := []Server{
 		{"Minecraft Vanilla", 25565},
 		{"Minecraft Modded: Society Sunlit Valley", 25566},
-		{"Valheim", 24567},
+		{"Valheim", 2457},
 		// Add more servers as needed
 	}
 
@@ -75,7 +75,7 @@ func CheckServers() (string, error) {
 
 	result := "🔍 Server Check Results:\n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("**%s** (Port %d):\n  Status: %s\n  Details: %s\n", resp.Name, resp.Port, resp.Status, resp.Message)
+		result += fmt.Sprintf("```\n**%s** (Port %d):\n  Details: %s\n```\n", resp.Name, resp.Port, resp.Message)
 	}
 	return result, nil
 }
