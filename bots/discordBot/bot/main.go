@@ -16,8 +16,8 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
-	steammarket "discordBot/functions/steamMarket"
 	"discordBot/functions/servercheck"
+	steammarket "discordBot/functions/steamMarket"
 	"discordBot/functions/tempmail"
 	util "discordBot/util"
 
@@ -427,10 +427,10 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 	/*** Steam Market Command Handlers ***/
 
 	// get market item info
-	if strings.HasPrefix(message.Content, "!price") || strings.HasPrefix(message.Content, "price") {
+	if strings.HasPrefix(message.Content, "/price") || strings.HasPrefix(message.Content, "price") {
 		parts := util.SplitArgs(message.Content)
 		if len(parts) < 2 {
-			server.ChannelMessageSend(message.ChannelID, "Usage: !price <item_name>")
+			server.ChannelMessageSend(message.ChannelID, "Usage: /price AK-47 | Redline (Field-Tested)")
 			return
 		}
 		itemName := strings.Join(parts[1:], " ")
