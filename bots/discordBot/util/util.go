@@ -23,38 +23,16 @@ func GetToken() string {
 	// Load .env from project root only
 	err := godotenv.Load()
 	if err != nil {
-		logger.Info("No .env file found", "ERROR", err.Error())
-	}
-
-	// Try DISCORD_BOT_TOKEN first, then TOKEN (legacy format)
-	token := os.Getenv("DISCORD_BOT_TOKEN")
-	if len(token) == 0 {
-		token = os.Getenv("TOKEN")
-	}
-
-	if len(token) == 0 {
-		panic("Token not found! Please set DISCORD_BOT_TOKEN or TOKEN in .env file")
-	}
-
-	return token
-}
-
-func GetEnvAsInt(key string, defaultVal int) int {
-	if value := os.Getenv(key); value != "" {
-		if intVal, err := strconv.Atoi(value); err == nil {
-			return intVal
+		logger.Info("INVALID BOT TOKEN", "ERROR", err.Error())
+		return "broke mate"
+	} else {
+		token := os.Getenv("DISCORD_BOT_TOKEN")
+		if len(token) == 0 {
+			panic("Token length == 0!")
+		} else {
+			return token
 		}
 	}
-	return defaultVal
-}
-
-func GetEnvAsBool(key string, defaultVal bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if boolVal, err := strconv.ParseBool(value); err == nil {
-			return boolVal
-		}
-	}
-	return defaultVal
 }
 
 func LoadEnv() error {
@@ -116,13 +94,12 @@ func SplitArgs(input string) []string {
 	}
 	return args
 }
-func ExecReportBinary(command string, args ...string) (string, error) {
-	logger := LoggerInit("UTIL", "ExecReportBinary")
-	cmd := "./reporter/csreport"
-	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
+func ExecBinary(binaryPath string, command string, args ...string) (string, error) {
+	logger := LoggerInit("UTIL", "ExecBinary")
+	binaryCmd := exec.Command(binaryPath, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
-		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+		logger.Error("Failed to execute binary", "error", err, "output", string(output))
 		return string(output), err
 	}
 	return string(output), nil
@@ -134,4 +111,11 @@ func FormatForSteamMarketInjection(input string) (string, error) {
 		return "", fmt.Errorf("failed to format Steam Market Injection URL")
 	}
 	return formatted, nil
+// execCommandOutput runs a shell command and returns its output as a string
+func ExecCommandOutput(cmd string) (string, error) {
+	out, err := exec.Command("sh", "-c", cmd).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
