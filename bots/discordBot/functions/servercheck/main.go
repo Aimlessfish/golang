@@ -19,6 +19,7 @@ type ServerResponse struct {
 	Port    int
 	Address string `json:"address"`
 	Status  string `json:"status"`
+	Message string
 }
 
 // CheckServers calls the serviceChecker binary for each server, parses the JSON responses, and returns a user-friendly string
@@ -61,6 +62,7 @@ func CheckServers() (string, error) {
 		// Ensure the response has the correct name and port
 		response.Name = srv.Name
 		response.Port = srv.Port
+		response.Message = "Server is " + response.Status
 		responses = append(responses, response)
 	}
 
@@ -71,7 +73,7 @@ func CheckServers() (string, error) {
 
 	result := "🔍 Server Check Results:\n \n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("%s (Port %d):\n  %s\n \n", resp.Name, resp.Port, resp.Status)
+		result += fmt.Sprintf("%s (Port %d):\n  %s\n \n", resp.Name, resp.Port, resp.Message)
 	}
 	return result, nil
 }
