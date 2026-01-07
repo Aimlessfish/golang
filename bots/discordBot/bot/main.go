@@ -16,6 +16,7 @@ import (
 	"discordBot/functions/generators"
 	"discordBot/functions/help"
 	getproxy "discordBot/functions/proxy"
+	steammarket "discordBot/functions/steamMarket"
 	"discordBot/functions/servercheck"
 	"discordBot/functions/tempmail"
 	util "discordBot/util"
@@ -23,6 +24,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const (
+	STEAM_URL = "https://steamcommunity.com/market/priceoverview/?appid=730&currency=3&market_hash_name="
+)
 const allowedChannelID = "1458239504698704037" // Replace with your specific channel ID
 
 func ConnectAPI(logger *slog.Logger) error {
@@ -419,6 +423,34 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			server.ChannelMessageSend(message.ChannelID, "Send me a DM to use commands ")
 		}
+	}
+	/*** Steam Market Command Handlers ***/
 
-	} // End of slash command handler
+	// get market item info
+	if strings.HasPrefix(message.Content, "!price") || strings.HasPrefix(message.Content, "price") {
+		parts := util.SplitArgs(message.Content)
+		if len(parts) < 2 {
+			server.ChannelMessageSend(message.ChannelID, "Usage: !price <item_name>")
+			return
+		}
+		itemName := strings.Join(parts[1:], " ")
+		if itemName == "" {
+			server.ChannelMessageSend(message.ChannelID, "you did not provide a valid item name")
+			return
+		}
+
+		// Call SteamMarketPriceOverviewURL to get price data
+		var priceOutput string
+		var err error
+
+		// Try to call the steammarket package function
+		priceOutput, err = steammarket.SteamMarketPriceOverviewURL(itemName)
+		if err != nil {
+			server.ChannelMessageSend(message.ChannelID, "Error fetching price: "+err.Error())
+			return
+		}
+		server.ChannelMessageSend(message.ChannelID, "\n"+priceOutput)
+		return
+	}
+
 }

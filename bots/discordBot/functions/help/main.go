@@ -4,9 +4,8 @@ import "github.com/bwmarrin/discordgo"
 
 func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo.MessageCreate) error {
 	embeddedMsg := &discordgo.MessageEmbed{
-		Title:       "Bot Help",
-		Description: "All Bot Commands: ",
-		Color:       0x00ffcc,
+		Title: "Bot Help",
+		Color: 0x00ffcc,
 		Fields: []*discordgo.MessageEmbedField{
 			{Name: "\u200B", Value: "_**General Commands:**_", Inline: false},
 			{Name: "/help", Value: "Displays this message!"},

@@ -1,13 +1,19 @@
 package util
 
 import (
+	"fmt"
 	"log/slog"
+
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
+)
+
+const (
+	STEAM_MARKET_PRICE_OVERVIEW_URL = "https://steamcommunity.com/market/priceoverview/?appid=730&currency=2&market_hash_name="
 )
 
 func GetToken() string {
@@ -99,6 +105,12 @@ func ExecBinary(binaryPath string, command string, args ...string) (string, erro
 	return string(output), nil
 }
 
+func FormatForSteamMarketInjection(input string) (string, error) {
+	formatted := fmt.Sprintf(STEAM_MARKET_PRICE_OVERVIEW_URL+"%s", input)
+	if formatted == "" {
+		return "", fmt.Errorf("failed to format Steam Market Injection URL")
+	}
+	return formatted, nil
 // execCommandOutput runs a shell command and returns its output as a string
 func ExecCommandOutput(cmd string) (string, error) {
 	out, err := exec.Command("sh", "-c", cmd).Output()
