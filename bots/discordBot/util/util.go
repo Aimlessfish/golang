@@ -111,7 +111,10 @@ func FormatForSteamMarketInjection(input string) (string, error) {
 		return "", fmt.Errorf("failed to format Steam Market Injection URL")
 	}
 	return formatted, nil
+}
+
 // execCommandOutput runs a shell command and returns its output as a string
+
 func ExecCommandOutput(cmd string) (string, error) {
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	if err != nil {
