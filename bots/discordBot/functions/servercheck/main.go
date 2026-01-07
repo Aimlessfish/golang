@@ -61,8 +61,10 @@ func CheckServers() (string, error) {
 		response := responsesFromBinary[0]
 		// Ensure the response has the correct name and port
 		response.Name = srv.Name
-		response.Port = srv.Port
-		response.Message = "Server is " + response.Status
+		response.Message = fmt.Sprintf("Status: %s", response.Status)
+		if response.Status == "Online" {
+			response.Message += fmt.Sprintf(", Address: %s", response.Address)
+		}
 		responses = append(responses, response)
 	}
 
@@ -71,9 +73,15 @@ func CheckServers() (string, error) {
 		return "🔍 No servers to check.", nil
 	}
 
-	result := "🔍 Server Check Results:\n \n"
+	result := "🔍 Server Check Results:\n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("%s (Port %d):\n  %s\n \n", resp.Name, resp.Port, resp.Message)
+		address := resp.Address
+		if resp.Status == "online" {
+			result += fmt.Sprint(fmt.Sprintf("%v:\n%v\n```%v```\n", resp.Name, resp.Message, address))
+		} else {
+			result += fmt.Sprint(fmt.Sprintf("%v:\n%s\n", resp.Name, resp.Message))
+		}
+
 	}
 	return result, nil
 }
