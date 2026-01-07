@@ -22,6 +22,9 @@ func DisplayHelp(channelID string, server *discordgo.Session, message *discordgo
 			// Steam Bot help
 			{Name: "\u200B", Value: "_**Steam Commands:**_", Inline: false},
 			{Name: "/help steam", Value: "Displays Steam bot commands."},
+			//Steam Market Help
+			{Name: "\u200B", Value: "_**Steam Market Commands:**_", Inline: false},
+			{Name: "/help market", Value: "Displays Steam Market commands."},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
@@ -95,6 +98,18 @@ func DisplayHelpGenerators(channelID string, server *discordgo.Session, message 
 			{Name: "/number <length>", Value: "Generates a random number with the specified number of digits (1-18). Example: !number 5"},
 			{Name: "/username <input>", Value: "Generates a realistic username based on your input. Example: !username JohnDoe"},
 			{Name: "/string <length>", Value: "Generates a random string with the specified length. Example: !string 8"},
+		},
+	}
+	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
+	return nil
+}
+
+func DisplayHelpMarket(channelID string, server *discordgo.Session, message *discordgo.MessageCreate) error {
+	embeddedMsg := &discordgo.MessageEmbed{
+		Title: "Steam Market Commands:",
+		Color: 0x00ffcc,
+		Fields: []*discordgo.MessageEmbedField{
+			{Name: "/price <item_name>", Value: "Fetches the price overview for the specified Steam Market item. Example: /price AK-47 | Redline (Field-Tested)"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
