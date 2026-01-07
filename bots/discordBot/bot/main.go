@@ -406,7 +406,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				server.ChannelMessageSend(channelID, "Failed to check server status: "+err.Error())
 				return
 			}
-			server.ChannelMessageSend(channelID, "```"+output+"```")
+			server.ChannelMessageSend(channelID, output)
 
 		}
 
