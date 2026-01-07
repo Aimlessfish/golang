@@ -75,7 +75,7 @@ func CheckServers() (string, error) {
 
 	result := "🔍 Server Check Results:\n"
 	for _, resp := range responses {
-		result += fmt.Sprintf("```\n**%s** (Port %d):\n  Details: %s\n```\n", resp.Name, resp.Port, resp.Message)
+		result += fmt.Sprintf("```%s (Port %d):\n  Details: %s```\n\n", resp.Name, resp.Port, resp.Message)
 	}
 	return result, nil
 }
