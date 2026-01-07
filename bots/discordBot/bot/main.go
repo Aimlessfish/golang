@@ -58,7 +58,7 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 	if message.Author.ID == server.State.User.ID {
 		return
 	}
-	if strings.HasPrefix(message.Content, "/") {
+	if strings.HasPrefix(message.Content, "/") && !strings.HasPrefix(message.Content, "/servers") {
 		server.ChannelMessageSendReply(message.ChannelID, "loading..", &discordgo.MessageReference{
 			MessageID: message.ID,
 			ChannelID: message.ChannelID,
