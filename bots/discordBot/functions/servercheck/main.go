@@ -47,9 +47,9 @@ func CheckServers() (string, error) {
 			continue
 		}
 
-		var response ServerResponse
-		err = json.Unmarshal([]byte(output), &response)
-		if err != nil {
+		var responsesFromBinary []ServerResponse
+		err = json.Unmarshal([]byte(output), &responsesFromBinary)
+		if err != nil || len(responsesFromBinary) == 0 {
 			responses = append(responses, ServerResponse{
 				Name:    srv.Name,
 				Port:    srv.Port,
@@ -59,9 +59,12 @@ func CheckServers() (string, error) {
 			continue
 		}
 
+		// Take the first (and presumably only) response
+		response := responsesFromBinary[0]
 		// Ensure the response has the correct name and port
 		response.Name = srv.Name
 		response.Port = srv.Port
+		response.Message = "Server is " + response.Status
 		responses = append(responses, response)
 	}
 
