@@ -105,6 +105,7 @@ func ExecBinary(binaryPath string, command string, args ...string) (string, erro
 	return string(output), nil
 }
 
+// execCommandOutput runs a shell command and returns its output as a string
 func FormatForSteamMarketInjection(input string) (string, error) {
 	formatted := fmt.Sprintf(STEAM_MARKET_PRICE_OVERVIEW_URL+"%s", input)
 	if formatted == "" {

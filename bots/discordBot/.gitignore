@@ -1,3 +1,5 @@
+# Go build and dependency files
+
 # Dependency directories (vendor/ is used in Go modules)
 vendor/
 
