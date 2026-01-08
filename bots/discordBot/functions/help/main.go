@@ -109,7 +109,7 @@ func DisplayHelpMarket(channelID string, server *discordgo.Session, message *dis
 		Title: "Steam Market Commands:",
 		Color: 0x00ffcc,
 		Fields: []*discordgo.MessageEmbedField{
-			{Name: "/price <item_name>", Value: "Fetches the price overview for the specified Steam Market item. Example: /price AK-47 | Redline (Field-Tested)"},
+			{Name: "/price <item_name | skin_name (wear)>", Value: "Fetches the price overview for the specified Steam Market item. Example: /price AK-47 | Redline (Field-Tested)"},
 		},
 	}
 	server.ChannelMessageSendEmbed(channelID, embeddedMsg)
