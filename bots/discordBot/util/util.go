@@ -1,13 +1,19 @@
 package util
 
 import (
+	"fmt"
 	"log/slog"
+
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
+)
+
+const (
+	STEAM_MARKET_PRICE_OVERVIEW_URL = "https://steamcommunity.com/market/priceoverview/?appid=730&currency=2&market_hash_name="
 )
 
 func GetToken() string {
@@ -88,19 +94,28 @@ func SplitArgs(input string) []string {
 	}
 	return args
 }
-func ExecReportBinary(command string, args ...string) (string, error) {
-	logger := LoggerInit("UTIL", "ExecReportBinary")
-	cmd := "./functions/reporter/csreport"
-	binaryCmd := exec.Command(cmd, append([]string{command}, args...)...)
+func ExecBinary(binaryPath string, command string, args ...string) (string, error) {
+	logger := LoggerInit("UTIL", "ExecBinary")
+	binaryCmd := exec.Command(binaryPath, append([]string{command}, args...)...)
 	output, err := binaryCmd.CombinedOutput()
 	if err != nil {
-		logger.Error("Failed to execute report binary", "error", err, "output", string(output))
+		logger.Error("Failed to execute binary", "error", err, "output", string(output))
 		return string(output), err
 	}
 	return string(output), nil
 }
 
 // execCommandOutput runs a shell command and returns its output as a string
+func FormatForSteamMarketInjection(input string) (string, error) {
+	formatted := fmt.Sprintf(STEAM_MARKET_PRICE_OVERVIEW_URL+"%s", input)
+	if formatted == "" {
+		return "", fmt.Errorf("failed to format Steam Market Injection URL")
+	}
+	return formatted, nil
+}
+
+// execCommandOutput runs a shell command and returns its output as a string
+
 func ExecCommandOutput(cmd string) (string, error) {
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	if err != nil {
