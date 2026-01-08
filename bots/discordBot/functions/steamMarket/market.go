@@ -5,24 +5,22 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 )
 
-func marketHashName(param string) string {
-	return url.QueryEscape(param)
+var data steamMarketInjection
+
+type steamMarketInjection struct {
+	Success     bool   `json:"success"`
+	PriceLow    string `json:"lowest_price"`
+	Volume      string `json:"volume"`
+	PriceMedian string `json:"median_price"`
 }
 
 func SteamMarketPriceOverviewURL(itemName string) (string, error) {
 	logger := util.LoggerInit("UTIL", "SteamMarketPriceOverviewURL")
-	type steamMarketInjection struct {
-		Success     bool   `json:"success"`
-		PriceLow    string `json:"lowest_price"`
-		Volume      string `json:"volume"`
-		PriceMedian string `json:"median_price"`
-	}
-	var data steamMarketInjection
+
 	// Ensure item name is URL-escaped
-	itemHash := marketHashName(itemName)
+	itemHash := util.MarketHashName(itemName)
 	output, err := util.FormatForSteamMarketInjection(itemHash)
 	if err != nil && output == "" {
 		logger.Error("URL formatting failed", "error", err, "output", output)
@@ -48,7 +46,7 @@ func SteamMarketPriceOverviewURL(itemName string) (string, error) {
 		logger.Error("Steam API did not return success", "body", string(body))
 		return "Steam API did not return success", nil
 	}
-	result := "PriceLow: " + data.PriceLow + "\n" +
+	result := "Price - Low: " + data.PriceLow + "\n" +
 		"Median: " + data.PriceMedian
 	return result, nil
 

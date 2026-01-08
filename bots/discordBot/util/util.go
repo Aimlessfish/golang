@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
 
 	"os"
 	"os/exec"
@@ -122,4 +123,8 @@ func ExecCommandOutput(cmd string) (string, error) {
 		return "", err
 	}
 	return string(out), nil
+}
+
+func MarketHashName(param string) string {
+	return url.QueryEscape(param)
 }
