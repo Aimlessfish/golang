@@ -45,7 +45,7 @@ func HandleIncomingMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 	return nil // Return nil if no errors
 }
 
-// CONNECT TO THE FKING API WITH YOUR API KEY
+// CONNECT TO THE TELEGRAM API WITH YOUR API KEY
 func ConnectAPI() (string, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)

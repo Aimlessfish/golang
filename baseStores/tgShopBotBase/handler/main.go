@@ -9,6 +9,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// MAP TO STORE LAST MESSAGE IDS FOR EACH CHAT TO DELETE PREVIOUS MESSAGES
 var lastMessageMap = make(map[int64]int)
 
 func Buttons() tgbotapi.InlineKeyboardMarkup {
