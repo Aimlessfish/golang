@@ -54,7 +54,18 @@ func HandleHelp(server *discordgo.Session, message *discordgo.MessageCreate) {
 	}
 }
 func HandleProxy(server *discordgo.Session, message *discordgo.MessageCreate) {
-	proxies := getproxy.ProxyHandler(1)
+	parts := util.SplitArgs(message.Content)
+	proxyType := "http" // default
+	if len(parts) > 1 {
+		switch parts[1] {
+		case "http", "https", "socks5":
+			proxyType = parts[1]
+		default:
+			server.ChannelMessageSend(message.ChannelID, "Invalid proxy type. Use: http, https, or socks5")
+			return
+		}
+	}
+	proxies := getproxy.ProxyHandler(proxyType)
 	for _, proxy := range proxies {
 		server.ChannelMessageSend(message.ChannelID, proxy)
 	}

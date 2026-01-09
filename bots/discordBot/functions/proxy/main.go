@@ -5,69 +5,58 @@
 package proxy
 
 import (
-	"fmt"
-	"log/slog"
-	"net"
-	"os"
-	"time"
-
-	apiCalls "discordBot/functions/proxy/apicalls"
-	initlogger "discordBot/util"
+	"discordBot/util"
+	"encoding/json"
 )
 
-func ProxyHandler(mode int) []string {
-	logger := initlogger.LoggerInit("logID", "Main")
+const (
+	binaryPath = "./bin/proxy"
+)
 
-	proxies, err := apiCalls.APICall(mode)
-	if err != nil {
-		logger.Error("Failed to run APICall", "error", err)
-	}
-	workingProxies := testAndList(proxies)
-	for _, proxy := range workingProxies {
-		fmt.Println(proxy)
-	}
-
-	return workingProxies
-
+type OutputData struct {
+	Proxies []string `json:"proxies"`
 }
 
-func TestProxy(proxies []string) ([]string, error) {
-	var workingProxies []string
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With("logID", "TestProxy")
+type ProxyEntry struct {
+	IP   string `json:"ip"`
+	Port string `json:"port"`
+}
 
+func ProxyHandler(proxyType string) []string {
+	logger := util.LoggerInit("PROXY HANDLER", "PROXY")
+
+	mode := proxyType
+	var output string
+	var err error
+
+	switch mode {
+	case "http":
+		output, err = util.ExecBinary(binaryPath, "http")
+	case "https":
+		output, err = util.ExecBinary(binaryPath, "https")
+	case "socks5":
+		output, err = util.ExecBinary(binaryPath, "socks5")
+	default:
+		logger.Error("Invalid proxy type", "type", proxyType)
+		return []string{}
+	}
+
+	if err != nil {
+		logger.Error("Failed to execute proxy binary", "error", err, "type", proxyType)
+		return []string{}
+	}
+
+	var proxies []ProxyEntry
+	err = json.Unmarshal([]byte(output), &proxies)
+	if err != nil {
+		logger.Error("Failed to parse JSON output", "error", err, "type", proxyType)
+		return []string{}
+	}
+
+	var result []string
 	for _, proxy := range proxies {
-		timeout := 2 * time.Second
-		conn, err := net.DialTimeout("tcp", "google.com:80", timeout)
-		if err != nil {
-			logger.Error("Ping failed for "+proxy, "error", err)
-			continue
-		}
-		conn.Close()
-
-		workingProxies = append(workingProxies, proxy)
-
-	}
-	if len(workingProxies) >= 20 {
-		return workingProxies, nil
+		result = append(result, proxy.IP+":"+proxy.Port)
 	}
 
-	return workingProxies, nil
-}
-
-func testAndList(proxies []string) []string {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-	logger = slog.With("logID", "Test and List")
-
-	workingProxies, err := TestProxy(proxies)
-	if err != nil {
-		logger.Error("Failed to test proxies", "error", err)
-	}
-	if len(workingProxies) == 0 {
-		logger.Error("No working proxies found", "error", err)
-	}
-
-	return workingProxies
+	return result
 }
