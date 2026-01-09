@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -127,4 +128,15 @@ func ExecCommandOutput(cmd string) (string, error) {
 
 func MarketHashName(param string) string {
 	return url.QueryEscape(param)
+}
+
+func ParseJsonOutput(output string) (map[string]interface{}, error) {
+	logger := LoggerInit("UTIL", "ParseJsonOutput")
+	var result map[string]interface{}
+	err := json.Unmarshal([]byte(output), &result)
+	if err != nil {
+		logger.Error("Failed to parse JSON output", "error", err)
+		return nil, err
+	}
+	return result, nil
 }
