@@ -143,10 +143,23 @@ func messageHandler(server *discordgo.Session, message *discordgo.MessageCreate)
 				if len(parts) >= 3 {
 					amount := parts[2]
 					server.ChannelMessageSend(message.ChannelID, amount+" Reports started for: \n (uid: "+uid+")")
-					util.ExecBinary("./bin/csreport", uid, amount)
+					output, err := util.ExecBinary("./bin/csreport", uid, amount)
+					if err != nil {
+						server.ChannelMessageSend(message.ChannelID, "Failed to send reports!")
+					} else {
+						server.ChannelMessageSend(message.ChannelID, "\n"+output)
+						server.ChannelMessageSend(message.ChannelID, amount+" Reports sent for: \n (uid: "+uid+")")
+					}
 				} else {
 					server.ChannelMessageSend(message.ChannelID, "Report started for: \n (uid: "+uid+")")
-					util.ExecBinary("./bin/csreport", uid, "1")
+					output, err := util.ExecBinary("./bin/csreport", uid, "1")
+					if err != nil {
+						server.ChannelMessageSend(message.ChannelID, "Failed to send report!")
+					} else {
+						server.ChannelMessageSend(message.ChannelID, "\n"+output)
+						server.ChannelMessageSend(message.ChannelID, "Report sent for: \n (uid: "+uid+")")
+					}
+
 				}
 			}
 			// Bot Addition Handler
