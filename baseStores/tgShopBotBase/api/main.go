@@ -6,8 +6,9 @@ import (
 
 	"telegramconnect/handler"
 
+	util "telegramconnect/util"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/joho/godotenv"
 )
 
 // THIS HANDLES INITAL USER COMMANDS
@@ -15,7 +16,7 @@ import (
 func CommandControl(bot *tgbotapi.BotAPI, message *tgbotapi.Message) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	logger = slog.With("LogID", "CommandControl")
+	logger = logger.With("LogID", "CommandControl")
 	switch message.Command() {
 	case "start":
 		handler.HandleStart(bot, message)
@@ -49,20 +50,15 @@ func HandleIncomingMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update) error {
 func ConnectAPI() (string, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	logger = slog.With("MAIN", "TG CONNECT")
+	logger = logger.With("MAIN", "TG CONNECT")
 
-	err := godotenv.Load()
+	envVars, err := util.ValueGetter("TELEGRAM_BOT_TOKEN")
 	if err != nil {
-		return "godotenv.Load failed", err
+		logger.Warn("Error getting token", "Error", err.Error())
+		return "Failed to get token", err
 	}
-
-	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	if botToken == "" {
-		logger.Error("Bot token is missing or broken in the environment variables.", "error", err)
-		return "Bot token is missing or broken ", err
-	}
-
-	bot, err := tgbotapi.NewBotAPI(botToken)
+	token := envVars["TELEGRAM_BOT_TOKEN"]
+	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		logger.Warn("Error running NewBot", "Error", err.Error())
 		return "Failed to connect API key to TGAPI", err

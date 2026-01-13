@@ -50,3 +50,4 @@ bots/regBot/bin/firefox/gmp-clearkey/0.1/manifest.json
 bots/regBot/bin/firefox/icons/updater.png
 bots/discordBot/.env
 bots/discordBot/functions/betting/.env
+baseStores/tgShopBotBase/.env
