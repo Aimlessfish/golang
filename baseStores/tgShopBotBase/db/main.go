@@ -129,14 +129,11 @@ func interact(query string, args ...interface{}) (interface{}, error) {
 
 // Product operations
 func (p *Product) Insert() error {
-	result, err := interact("INSERT INTO products (vendor_id, category_id, name, description, price, stock_quantity, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING product_id",
-		p.VendorID, p.CategoryID, p.Name, p.Description, p.Price, p.StockQty, p.ImageURL)
-	if err != nil {
-		return err
+	if db == nil {
+		return sql.ErrConnDone
 	}
-	sqlResult := result.(sql.Result)
-	id, err := sqlResult.LastInsertId()
-	p.ID = int(id)
+	err := db.QueryRow("INSERT INTO products (vendor_id, category_id, name, description, price, stock_quantity, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING product_id",
+		p.VendorID, p.CategoryID, p.Name, p.Description, p.Price, p.StockQty, p.ImageURL).Scan(&p.ID)
 	return err
 }
 
@@ -169,14 +166,17 @@ func (p *Product) Delete() error {
 
 // Customer operations
 func (c *Customer) Insert() error {
-	result, err := interact("INSERT INTO customers (telegram_id, username, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING customer_id",
-		c.TelegramID, c.Username, c.FirstName, c.LastName)
-	if err != nil {
-		return err
+	if db == nil {
+		return sql.ErrConnDone
 	}
-	sqlResult := result.(sql.Result)
-	id, err := sqlResult.LastInsertId()
-	c.ID = int(id)
+	err := db.QueryRow("INSERT INTO customers (telegram_id, username, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING customer_id",
+		c.TelegramID, c.Username, c.FirstName, c.LastName).Scan(&c.ID)
+	return err
+}
+
+func (c *Customer) Update() error {
+	_, err := interact("UPDATE customers SET username = $1, first_name = $2, last_name = $3, updated_at = CURRENT_TIMESTAMP WHERE customer_id = $4",
+		c.Username, c.FirstName, c.LastName, c.ID)
 	return err
 }
 
@@ -198,14 +198,22 @@ func GetCustomerByTelegramID(telegramID int64) (*Customer, error) {
 
 // Category operations
 func (cat *Category) Insert() error {
-	result, err := interact("INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING category_id",
-		cat.Name, cat.Description)
-	if err != nil {
-		return err
+	if db == nil {
+		return sql.ErrConnDone
 	}
-	sqlResult := result.(sql.Result)
-	id, err := sqlResult.LastInsertId()
-	cat.ID = int(id)
+	err := db.QueryRow("INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING category_id",
+		cat.Name, cat.Description).Scan(&cat.ID)
+	return err
+}
+
+func (cat *Category) Update() error {
+	_, err := interact("UPDATE categories SET name = $1, description = $2 WHERE category_id = $3",
+		cat.Name, cat.Description, cat.ID)
+	return err
+}
+
+func (cat *Category) Delete() error {
+	_, err := interact("DELETE FROM categories WHERE category_id = $1", cat.ID)
 	return err
 }
 
@@ -227,4 +235,218 @@ func GetAllCategories() ([]Category, error) {
 		categories = append(categories, cat)
 	}
 	return categories, nil
+}
+
+func GetProductsByCategory(categoryID int) ([]Product, error) {
+	result, err := interact("SELECT product_id, vendor_id, category_id, name, description, price, stock_quantity, image_url, created_at, updated_at FROM products WHERE category_id = $1 ORDER BY name", categoryID)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var p Product
+		err = rows.Scan(&p.ID, &p.VendorID, &p.CategoryID, &p.Name, &p.Description, &p.Price, &p.StockQty, &p.ImageURL, &p.CreatedAt, &p.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	return products, nil
+}
+
+func GetProductsByVendor(vendorID int) ([]Product, error) {
+	result, err := interact("SELECT product_id, vendor_id, category_id, name, description, price, stock_quantity, image_url, created_at, updated_at FROM products WHERE vendor_id = $1 ORDER BY name", vendorID)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var p Product
+		err = rows.Scan(&p.ID, &p.VendorID, &p.CategoryID, &p.Name, &p.Description, &p.Price, &p.StockQty, &p.ImageURL, &p.CreatedAt, &p.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	return products, nil
+}
+
+func UpdateProductStock(productID int, quantity int) error {
+	_, err := interact("UPDATE products SET stock_quantity = $1, updated_at = CURRENT_TIMESTAMP WHERE product_id = $2", quantity, productID)
+	return err
+}
+
+// Vendor operations
+func (v *Vendor) Insert() error {
+	if db == nil {
+		return sql.ErrConnDone
+	}
+	err := db.QueryRow("INSERT INTO vendors (name, description, telegram_username) VALUES ($1, $2, $3) RETURNING vendor_id",
+		v.Name, v.Description, v.TelegramUsername).Scan(&v.ID)
+	return err
+}
+
+func GetVendor(id int) (*Vendor, error) {
+	result, err := interact("SELECT vendor_id, name, description, telegram_username, created_at, updated_at FROM vendors WHERE vendor_id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	if rows.Next() {
+		var v Vendor
+		err = rows.Scan(&v.ID, &v.Name, &v.Description, &v.TelegramUsername, &v.CreatedAt, &v.UpdatedAt)
+		return &v, err
+	}
+	return nil, sql.ErrNoRows
+}
+
+func (v *Vendor) Update() error {
+	_, err := interact("UPDATE vendors SET name = $1, description = $2, telegram_username = $3, updated_at = CURRENT_TIMESTAMP WHERE vendor_id = $4",
+		v.Name, v.Description, v.TelegramUsername, v.ID)
+	return err
+}
+
+// Order operations
+func (o *Order) Insert() error {
+	if db == nil {
+		return sql.ErrConnDone
+	}
+	err := db.QueryRow("INSERT INTO orders (customer_id, total_amount, status) VALUES ($1, $2, $3) RETURNING order_id",
+		o.CustomerID, o.TotalAmount, o.Status).Scan(&o.ID)
+	return err
+}
+
+func GetOrder(id int) (*Order, error) {
+	result, err := interact("SELECT order_id, customer_id, total_amount, status, created_at, updated_at FROM orders WHERE order_id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	if rows.Next() {
+		var o Order
+		err = rows.Scan(&o.ID, &o.CustomerID, &o.TotalAmount, &o.Status, &o.CreatedAt, &o.UpdatedAt)
+		return &o, err
+	}
+	return nil, sql.ErrNoRows
+}
+
+func (o *Order) UpdateStatus(status string) error {
+	_, err := interact("UPDATE orders SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE order_id = $2", status, o.ID)
+	if err == nil {
+		o.Status = status
+	}
+	return err
+}
+
+func GetOrdersByCustomer(customerID int) ([]Order, error) {
+	result, err := interact("SELECT order_id, customer_id, total_amount, status, created_at, updated_at FROM orders WHERE customer_id = $1 ORDER BY created_at DESC", customerID)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	var orders []Order
+	for rows.Next() {
+		var o Order
+		err = rows.Scan(&o.ID, &o.CustomerID, &o.TotalAmount, &o.Status, &o.CreatedAt, &o.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+// OrderItem operations
+func (oi *OrderItem) Insert() error {
+	if db == nil {
+		return sql.ErrConnDone
+	}
+	err := db.QueryRow("INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5) RETURNING order_item_id",
+		oi.OrderID, oi.ProductID, oi.Quantity, oi.UnitPrice, oi.TotalPrice).Scan(&oi.ID)
+	return err
+}
+
+func GetOrderItems(orderID int) ([]OrderItem, error) {
+	result, err := interact("SELECT order_item_id, order_id, product_id, quantity, unit_price, total_price FROM order_items WHERE order_id = $1", orderID)
+	if err != nil {
+		return nil, err
+	}
+	rows := result.(*sql.Rows)
+	defer rows.Close()
+
+	var items []OrderItem
+	for rows.Next() {
+		var oi OrderItem
+		err = rows.Scan(&oi.ID, &oi.OrderID, &oi.ProductID, &oi.Quantity, &oi.UnitPrice, &oi.TotalPrice)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, oi)
+	}
+	return items, nil
+}
+
+// Transaction helper for creating order with items
+func CreateOrderWithItems(customerID int, items []OrderItem) (*Order, error) {
+	if db == nil {
+		return nil, sql.ErrConnDone
+	}
+
+	// Start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Calculate total
+	var total float64
+	for _, item := range items {
+		item.TotalPrice = item.UnitPrice * float64(item.Quantity)
+		total += item.TotalPrice
+	}
+
+	// Create order
+	var orderID int
+	err = tx.QueryRow("INSERT INTO orders (customer_id, total_amount, status) VALUES ($1, $2, 'pending') RETURNING order_id",
+		customerID, total).Scan(&orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Insert order items
+	for _, item := range items {
+		_, err = tx.Exec("INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price) VALUES ($1, $2, $3, $4, $5)",
+			orderID, item.ProductID, item.Quantity, item.UnitPrice, item.TotalPrice)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update stock
+		_, err = tx.Exec("UPDATE products SET stock_quantity = stock_quantity - $1 WHERE product_id = $2",
+			item.Quantity, item.ProductID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Return the created order
+	return GetOrder(orderID)
 }
