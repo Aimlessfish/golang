@@ -29,6 +29,7 @@ type Vendor struct {
 	Description      string    `db:"description"`
 	TelegramUsername string    `db:"telegram_username"`
 	CreatedAt        time.Time `db:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at"`
 }
 
 type Category struct {
@@ -48,6 +49,25 @@ type Product struct {
 	StockQty    int       `db:"stock_quantity"`
 	ImageURL    string    `db:"image_url"`
 	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
+}
+
+type Order struct {
+	ID          int       `db:"order_id"`
+	CustomerID  int       `db:"customer_id"`
+	TotalAmount float64   `db:"total_amount"`
+	Status      string    `db:"status"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
+}
+
+type OrderItem struct {
+	ID         int     `db:"order_item_id"`
+	OrderID    int     `db:"order_id"`
+	ProductID  int     `db:"product_id"`
+	Quantity   int     `db:"quantity"`
+	UnitPrice  float64 `db:"unit_price"`
+	TotalPrice float64 `db:"total_price"`
 }
 
 var db *sql.DB
@@ -121,7 +141,7 @@ func (p *Product) Insert() error {
 }
 
 func GetProduct(id int) (*Product, error) {
-	result, err := interact("SELECT product_id, vendor_id, category_id, name, description, price, stock_quantity, image_url, created_at FROM products WHERE product_id = $1", id)
+	result, err := interact("SELECT product_id, vendor_id, category_id, name, description, price, stock_quantity, image_url, created_at, updated_at FROM products WHERE product_id = $1", id)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +150,7 @@ func GetProduct(id int) (*Product, error) {
 
 	if rows.Next() {
 		var p Product
-		err = rows.Scan(&p.ID, &p.VendorID, &p.CategoryID, &p.Name, &p.Description, &p.Price, &p.StockQty, &p.ImageURL, &p.CreatedAt)
+		err = rows.Scan(&p.ID, &p.VendorID, &p.CategoryID, &p.Name, &p.Description, &p.Price, &p.StockQty, &p.ImageURL, &p.CreatedAt, &p.UpdatedAt)
 		return &p, err
 	}
 	return nil, sql.ErrNoRows
